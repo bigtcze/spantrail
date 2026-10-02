@@ -45,9 +45,16 @@ lanes; do not treat a specialist's partial test report as completion. For privac
 or cleanup claims, include a negative control or failure-path test that would
 detect the corresponding regression.
 
+Tests that run before artifact generation must create their own temporary
+fixtures, not depend on ignored outputs from earlier runs. Before publishing a
+new artifact consumer or test gate, remove the relevant ignored generated
+artifact and run the complete producer-to-consumer gate. A warm-workspace pass
+does not establish fresh-checkout behavior.
+
 For best-effort runtime APIs, a plausible result is not proof of validity. Test
 adjacent valid/invalid boundaries, not only wholly empty inputs; source-map
 checks must include unmapped code after mapped code and source-less segments.
+Keep unrelated input dimensions valid so rejection tests cannot pass for the wrong reason.
 Establish allowed roots independently of observed input, and verify malformed
 diagnostic data cannot change application behavior. Check version-sensitive API
 availability against the installed runtime when documentation claims conflict.

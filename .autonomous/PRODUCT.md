@@ -1,6 +1,6 @@
 # Current Product Strategy
 
-Status: technical feasibility; controlled browser-to-backend correlation and TypeScript source attribution proofs integrated
+Status: controlled prototype; browser-to-backend correlation, explicit TypeScript source attribution, and local artifact viewer integrated
 
 ## Current hypothesis
 
@@ -21,8 +21,8 @@ Desired first-demo experience:
 1. Keep the controlled correlation proof green locally and in CI.
 2. Keep the controlled TypeScript source-attribution proof green, including
    unknown-location fallback and failure/recovery behavior.
-3. Build the smallest compelling viewer from the observed local artifact.
-4. Measure setup friction.
+3. Keep the local viewer's real-artifact browser gate and fail-closed validation green.
+4. Measure and reduce setup friction toward a single-command controlled demo.
 5. Only then expand supported technologies.
 
 ## Evidence and limits
@@ -39,11 +39,21 @@ failure and later recovery behavior. See
 The TypeScript fixture uses Node.js native call-site/source-map APIs and accepts
 only the controlled fixture's compiler-owned external source map and project
 relative source location. It does not provide generic TypeScript, framework, or
-function auto-capture, nor a viewer. Overlapping actions, cross-origin requests,
-redirects, and databases remain unproven. The next product step is a small viewer
-grounded in the observed local artifact, not broad stack expansion. AppMap and
-Jaeger are useful reference points; these proofs establish no comparative
-advantage.
+function auto-capture. Overlapping actions, cross-origin requests, redirects,
+and databases remain unproven.
+
+The local viewer consumes the real proof artifact: action selection, parent-linked
+backend span trees, durations, identifiers, mapped source positions, and explicit
+unknown attribution. Its integrated Chromium gate verifies isolation, evidence
+details, switching actions, hostile text, empty/error states, and reload recovery.
+It binds to loopback and loads no source content or external assets. This is a
+read-only snapshot, not a live capture UI or timeline; correlation action roots
+have IDs only, not synthetic observed spans. See
+[`docs/local-viewer.md`](../docs/local-viewer.md).
+
+The next product step is reducing controlled-demo setup friction and measuring
+time to a useful viewer result, not broad stack expansion. AppMap and Jaeger are
+useful reference points; these proofs establish no comparative advantage.
 
 This file is intentionally mutable.
 Update it when evidence changes the product strategy.
