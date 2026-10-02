@@ -1,6 +1,6 @@
 # SpanTrail
 
-SpanTrail is currently a bootstrap experiment, not a generally supported tracing product. Its first verified browser-to-backend proof checks whether a deliberately controlled Chromium action can be correlated with Node.js HTTP and application spans, entirely on the local machine.
+SpanTrail is currently a set of controlled proofs, not a generally supported tracing product. A Chromium browser trail is integrated with an executed compiled TypeScript fixture that reports source locations only at explicit instrumentation calls. Everything runs locally.
 
 ## Run the proof
 
@@ -13,12 +13,12 @@ npm test
 npm run proof
 ```
 
-`npm test` runs unit/lifecycle tests and the real Chromium browser proof. `npm run proof` runs the experiment and writes its evidence to the ignored path `experiments/correlation/artifacts/proof.json`. This artifact contains compact action/span evidence, not source code, request bodies, or secrets. No collector, LLM, or remote telemetry service is required or contacted.
+`npm test` builds the TypeScript fixture, runs unit/lifecycle/source-attribution tests, and runs the real Chromium browser proof. The source-attribution proof sends actual requests through the traced server and executes compiled fixture code; failure-path source-map cases use disposable copies. `npm run proof` runs the browser experiment and writes its evidence to the ignored path `experiments/correlation/artifacts/proof.json`. The artifact contains compact action/span evidence, not source code, request bodies, or secrets. No collector, LLM, or remote telemetry service is required or contacted.
 
-For Linux CI, install browser system dependencies with `npx playwright install --with-deps chromium` before running the tests. See [the proof documentation](docs/correlation-proof.md) for architecture, detailed limits, and upstream references.
+For Linux CI, install browser system dependencies with `npx playwright install --with-deps chromium` before running the tests. See the [browser correlation proof](docs/correlation-proof.md) and the [source-attribution proof](docs/source-attribution-proof.md) for architecture and limits.
 
 ## Current scope
 
-The evidence covers serialized, same-origin fixture actions and explicitly instrumented asynchronous service work. It is not evidence of generic click attribution, framework support, database tracing, source-location capture, or correct attribution for overlapping actions. The experiment is JavaScript; it does not claim TypeScript application support.
+The browser evidence covers serialized, same-origin fixture actions and explicitly instrumented asynchronous service work. The separate TypeScript source-attribution fixture verifies locations for explicit `withSourceSpan` calls; it does not establish generic TypeScript or framework support, automatic function capture, or a viewer. Overlapping-action attribution and database tracing are not proven.
 
-The project is MIT-licensed. Its current OpenTelemetry and Playwright dependencies declare Apache-2.0 licenses; consult their package metadata for details.
+The project is MIT-licensed. The pinned TypeScript compiler declares Apache-2.0, `@types/node` and `@jridgewell/trace-mapping` declare MIT, and current OpenTelemetry and Playwright dependencies declare Apache-2.0 licenses; consult package metadata for details.

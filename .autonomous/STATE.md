@@ -3,59 +3,67 @@
 Project phase: technical feasibility
 
 Current milestone:
-Completed the first controlled browser action -> Node.js HTTP -> asynchronous
-service correlation proof. General application capture and source attribution
-remain unproven.
+Controlled browser action -> Node.js HTTP -> asynchronous service correlation
+and explicit compiled-TypeScript source attribution are verified together.
+The next product milestone is a small local viewer grounded in this evidence.
 
 Repository status:
-Work is published on `feat/local-correlation-proof` in open PR
-https://github.com/bigtcze/spantrail/pull/1 (not merged). The experiment, pinned
-dependencies, setup documentation, and a Chromium-backed GitHub Actions gate
-are committed as `f3bcead`. No issues, open PRs, releases, or CI runs were present at
-cycle start. The branch also contains the pre-existing tooling-maintenance
-commit `13beb97`; the autonomous runner and guardrails were not modified.
+PR #1 was merged into `main` as `d6e3837`; its main CI run `37033034104` passed.
+At this cycle's start there were no open issues or PRs and no failing latest CI.
+Existing uncommitted source-attribution work on
+`feat/typescript-source-attribution` took priority over new features. It has
+been completed, independently reviewed, and published as implementation commit
+`9ff5c75` in open PR https://github.com/bigtcze/spantrail/pull/2 (not merged).
+Both its push and pull-request Chromium CI passed. The publication-record
+commit changes only this state file; check the latest head gate before merging.
 
 ## Changes in this cycle
 
-- Added a disposable loopback fixture and real Chromium driver. Two serialized
-  clicks create distinct W3C contexts, visibly complete, and correlate with
-  auto-instrumented HTTP SERVER spans and explicit async INTERNAL service spans.
-- Verified exact parentage, positive durations, actual outgoing trace headers,
-  and isolation from uncorrelated control requests.
-- Collect only allowlisted action/span evidence in an ignored local JSON
-  artifact; no collector, remote export, or LLM is required.
-- Added context, failure-cleanup, interruption, and privacy tests. The privacy
-  observer has a working negative control for default metric and log exporters.
-- Documented setup and limitations in `README.md` and
-  `docs/correlation-proof.md`; added `.github/workflows/ci.yml`.
+- Completed the compiler-owned external source-map fixture and integrated it
+  into the real Chromium trail. Executed explicit calls report exact source
+  positions, including a nested call after `await`; unexecuted calls emit no span.
+- Verified HTTP/span failure then recovery, parentage, trace IDs, and durations.
+  Missing, malformed, unmapped, source-less, unsupported-scheme, invalid-version,
+  invalid-VLQ, outside-root, and external-caller cases remain source-unknown
+  without breaking the application operation or trace hierarchy.
+- Independent review reproduced false attribution from unsupported URL schemes
+  and permissive map decoders. Added scheme/version/VLQ guards and real compiled
+  subprocess regressions; focused follow-up review found no material issues.
+- Extended allowlisted diagnostics and local-only telemetry tripwire assertions
+  to failure requests. `statusCode` is explicitly documented as the OpenTelemetry
+  status enum, not the HTTP response status.
+- Updated setup, acceptance-to-test mapping, product limits, and workflow lessons.
+  Guardrails, authentication, global configuration, and the runner are unchanged.
 
 ## Verification
 
-Tested with Node.js 24.21.0, npm 11.19.0, and Playwright 1.63.0 Chromium.
+Tested with Node.js 24.21.0, npm 11.19.0, TypeScript 6.0.3, and Playwright 1.63.0.
 
-- `npm ci`: passed from the lockfile.
-- `npm test`: 12 context/lifecycle/privacy tests plus real Chromium proof passed.
-- Repeated `npm run proof`: passed, including
-  `SPANTRAIL_CONTROL_DELAY_MS=200 npm run proof`.
-- Independent reviews identified instrumentation-loading, exporter-default,
-  synchronization, and interrupted-cleanup defects; these were fixed and tested.
-- `git diff --check` and `npm audit --omit=dev`: passed; zero reported
-  dependency vulnerabilities.
-- Implementation commit `f3bcead` passed both push and pull-request Chromium CI
-  on GitHub's Node.js 24 Ubuntu runner (runs `37032149365` and `37032200752`).
-  Check the latest PR head before merge; earlier local/remote results are not a
-  substitute for that gate.
+- `npm ci` followed by `npm test`: clean lockfile installation and the full
+  integrated gate passed without additional setup or install-script approval.
+- `npm test`: all 27 context/lifecycle/privacy/source tests and the real Chromium
+  proof passed after integrating both fix lanes.
+- `SPANTRAIL_CONTROL_DELAY_MS=200 npm run proof`: passed; two browser actions,
+  correct source positions, trace hierarchy, and isolated controls.
+- Independent QA ran the original integrated proof; independent review identified
+  the missing boundaries, and a follow-up review verified the fixes with all 17
+  focused source/privacy tests passing.
+- `npm audit`: zero vulnerabilities, including development dependencies.
+- `git diff --check`: passed.
+- Implementation `9ff5c75` passed push CI run `37048439726` and pull-request CI
+  run `37048473192` on GitHub's Node.js 24 Ubuntu runner, including the lockfile
+  install, compiled source tests, privacy/lifecycle tests, and real Chromium.
 
 Immediate next action:
-Resolve PR/CI feedback first. Then prove trustworthy source-location attribution
-in a small Node.js/TypeScript fixture before expanding the stack or building a
-trail viewer. Preserve the controlled-action and explicit-service limitations
-until stronger runtime evidence exists.
+Resolve PR/CI feedback and integrate PR #2 first. Then build the
+smallest local viewer from the observed artifact before expanding supported
+stacks. Keep exact-location, fail-closed, failure/recovery, and privacy gates.
 
 Known blockers:
 None.
 
-Known scope limits: no generic click attribution, overlapping actions,
+Known scope limits: no generic click attribution, overlapping-action proof,
 cross-origin/redirect attribution, database tracing, automatic function capture,
-or source locations. The current experiment is JavaScript, not evidence of
-general TypeScript or framework support.
+general TypeScript/framework support, or viewer. Source attribution is only for
+explicit calls in the controlled compiled fixture; map authenticity, source
+content integrity, and symlink containment are not established.
