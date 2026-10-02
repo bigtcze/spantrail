@@ -12,8 +12,10 @@ PR #1 was merged into `main` as `d6e3837`; its main CI run `37033034104` passed.
 At this cycle's start there were no open issues or PRs and no failing latest CI.
 Existing uncommitted source-attribution work on
 `feat/typescript-source-attribution` took priority over new features. It has
-been completed, independently reviewed, and verified locally; publication and
-remote CI are the remaining end-of-cycle gates.
+been completed, independently reviewed, and published as implementation commit
+`9ff5c75` in open PR https://github.com/bigtcze/spantrail/pull/2 (not merged).
+Both its push and pull-request Chromium CI passed. The publication-record
+commit changes only this state file; check the latest head gate before merging.
 
 ## Changes in this cycle
 
@@ -48,9 +50,12 @@ Tested with Node.js 24.21.0, npm 11.19.0, TypeScript 6.0.3, and Playwright 1.63.
   focused source/privacy tests passing.
 - `npm audit`: zero vulnerabilities, including development dependencies.
 - `git diff --check`: passed.
+- Implementation `9ff5c75` passed push CI run `37048439726` and pull-request CI
+  run `37048473192` on GitHub's Node.js 24 Ubuntu runner, including the lockfile
+  install, compiled source tests, privacy/lifecycle tests, and real Chromium.
 
 Immediate next action:
-Resolve publication/PR/CI feedback first. Once this proof is integrated, build the
+Resolve PR/CI feedback and integrate PR #2 first. Then build the
 smallest local viewer from the observed artifact before expanding supported
 stacks. Keep exact-location, fail-closed, failure/recovery, and privacy gates.
 
