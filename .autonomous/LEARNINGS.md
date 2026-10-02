@@ -28,3 +28,33 @@ change future behaviour.
   options, stalling SDK shutdown. Preserve native request signatures and validate
   observers with a working negative control. Capture diagnostics at failure
   time: arrays interpolated before a wait misleadingly reported no activity.
+
+## 2026-10-02 — Source-map attribution must fail closed
+
+- Passing exact-location and empty-map tests did not establish trustworthy
+  attribution: Node 24's native source-map lookup extrapolated into an unmapped
+  generated line. Independent review reproduced this and malformed file URLs
+  that changed successful requests into HTTP 500. A same-line source-bearing
+  segment guard and fully contained diagnostic failures now have executable
+  counterexamples. FLOW now requires adjacent valid/invalid boundary tests;
+  this was verified through real compiled-service subprocesses, not only mocks.
+- Approved paths must originate from the fixture configuration/helper location,
+  not from the observed caller. A caller-derived root could falsely identify an
+  external service as the project's fixture. Keep that negative control and
+  report unsupported or unusable mappings as unknown rather than relabeling JS.
+- Documentation research incorrectly reported Node 24 source-map APIs absent;
+  the installed runtime exposes `setSourceMapsSupport` and `findOrigin`.
+  Validate version-sensitive availability locally before accepting such claims.
+
+## 2026-10-02 — Validate before permissive decoding and normalization
+
+- Independent review of the unfinished proof found that Node and trace-mapping
+  accepted version 2 and invalid VLQ characters, while filesystem normalization
+  collapsed opaque `webpack:`, `node:`, and `data:` sources into an approved path.
+  Explicit version/VLQ and URL-scheme guards now have real compiled-service
+  counterexamples. FLOW records this boundary: decoder success and path equality
+  alone do not prove usable local attribution.
+- The initial privacy test covered successful diagnostics only. Failure requests
+  now pass through the same exporter tripwire and schema/content allowlist.
+  Verification preserved generic failure responses and trace hierarchy; this
+  strengthens the existing failure-path rule without expanding product scope.

@@ -4,4 +4,5 @@
 
 # Correlation experiment output
 experiments/correlation/artifacts/
+experiments/source-attribution/dist/
 node_modules/

@@ -1,5 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -11,6 +11,25 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const delay = ms => new Promise(resolveDelay => setTimeout(resolveDelay, ms));
 const SERVER = SpanKind.SERVER;
 const INTERNAL = SpanKind.INTERNAL;
+const sourceFixture = resolve(dir, '../source-attribution/service.cts');
+
+async function sourceCallSites() {
+  const source = await readFile(sourceFixture, 'utf8');
+  const lines = source.split(/\r?\n/);
+  const locations = {};
+  for (const [name, marker] of Object.entries({
+    'action.service': '// SOURCE:service',
+    'action.after-await': '// SOURCE:after-await',
+    'action.unexecuted': '// SOURCE:unexecuted',
+  })) {
+    const lineIndex = lines.findIndex(line => line.includes(marker));
+    assert.notEqual(lineIndex, -1, `TypeScript fixture contains ${marker}`);
+    const columnIndex = lines[lineIndex].indexOf('withSourceSpan(');
+    assert.notEqual(columnIndex, -1, `${marker} is on a withSourceSpan invocation`);
+    locations[name] = { file: 'experiments/source-attribution/service.cts', line: lineIndex + 1, column: columnIndex + 1 };
+  }
+  return locations;
+}
 
 function bounded(promise, ms, label) {
   let timer;
@@ -102,30 +121,49 @@ export async function runProof({ spawn, childProgram, launchBrowser = options =>
     }
     if (interrupted) throw interrupted;
     const spans = await bounded(fetchSpans(origin, diagnosticTimeout), diagnosticTimeout + 100, 'Span diagnostics');
+    const sourceLocations = await sourceCallSites();
     assert.equal(actions.length, 2, 'both browser actions must be observed');
     assert.ok(actions.every(action => validContext(action) && action.traceId === action.serverTraceId), JSON.stringify(actions));
     assert.notEqual(actions[0].traceId, actions[1].traceId, 'each action must have a fresh trace');
     assert.notEqual(actions[0].spanId, actions[1].spanId, 'each action must have a distinct parent span');
     const servers = spans.filter(span => span.kind === SERVER && span.path === '/api/action');
     const services = spans.filter(span => span.kind === INTERNAL && span.name === 'action.service');
+    const afterAwait = spans.filter(span => span.kind === INTERNAL && span.name === 'action.after-await');
     const controls = spans.filter(span => span.kind === SERVER && span.path === '/api/control');
     assert.equal(servers.length, 2, 'exactly two action SERVER spans');
     assert.equal(services.length, 2, 'exactly two action.service INTERNAL spans');
+    assert.equal(afterAwait.length, 2, 'exactly two nested action.after-await spans');
+    assert.equal(spans.some(span => span.name === 'action.unexecuted'), false, 'the unexecuted source branch emits no span');
     assert.equal(controls.length, 2, 'exactly two control SERVER spans');
     for (const action of actions) {
       const serverSpan = servers.find(span => span.traceId === action.traceId);
       const serviceSpan = services.find(span => span.traceId === action.traceId);
       assert.ok(serverSpan && serviceSpan, 'expected server and service spans');
+      const nestedSpan = afterAwait.find(span => span.traceId === action.traceId);
+      assert.ok(nestedSpan, 'expected nested after-await span');
       assert.equal(serverSpan.parentSpanId, action.spanId);
       assert.equal(serviceSpan.parentSpanId, serverSpan.spanId);
-      assert.ok(serverSpan.durationMs > 0 && serviceSpan.durationMs > 0);
+      assert.equal(nestedSpan.parentSpanId, serviceSpan.spanId);
+      assert.equal(serviceSpan.source.status, 'mapped');
+      assert.equal(serviceSpan.source.file, sourceLocations['action.service'].file);
+      assert.equal(serviceSpan.source.line, sourceLocations['action.service'].line);
+      assert.equal(serviceSpan.source.column, sourceLocations['action.service'].column);
+      assert.equal(nestedSpan.source.status, 'mapped');
+      assert.equal(nestedSpan.source.file, sourceLocations['action.after-await'].file);
+      assert.equal(nestedSpan.source.line, sourceLocations['action.after-await'].line);
+      assert.equal(nestedSpan.source.column, sourceLocations['action.after-await'].column);
+      assert.ok(Number.isInteger(serverSpan.statusCode));
+      assert.ok(Number.isInteger(serviceSpan.statusCode));
+      assert.ok(Number.isInteger(nestedSpan.statusCode));
+      assert.ok(serverSpan.durationMs > 0 && serviceSpan.durationMs > 0 && nestedSpan.durationMs > 0);
     }
+    assert.ok(spans.filter(span => span.kind === SERVER).every(span => span.source.status === 'unknown'), 'HTTP spans have no user-source attribution');
     assert.ok(controls.every(span => span.parentSpanId === null && !actions.some(action => action.traceId === span.traceId)), 'control requests must be root spans outside action traces');
     const actionRequests = requests.filter(request => new URL(request.url).pathname === '/api/action');
     assert.equal(actionRequests.length, 2, 'browser must make exactly two action requests');
     for (const [index, request] of actionRequests.entries()) assert.equal(request.headers.traceparent, `00-${actions[index].traceId}-${actions[index].spanId}-01`, 'action request must carry its emitted context');
     assert.ok(requests.filter(request => new URL(request.url).pathname !== '/api/action').every(request => !('traceparent' in request.headers)), 'non-action requests must not carry traceparent');
-    const artifact = { actions: actions.map(({ traceId, spanId }) => ({ traceId, spanId })), spans: spans.map(({ name, kind, path, traceId, spanId, parentSpanId, durationMs }) => ({ name, kind, path, traceId, spanId, parentSpanId, durationMs })) };
+    const artifact = { actions: actions.map(({ traceId, spanId }) => ({ traceId, spanId })), spans: spans.map(({ name, kind, path, traceId, spanId, parentSpanId, durationMs, source, statusCode }) => ({ name, kind, path, traceId, spanId, parentSpanId, durationMs, source, statusCode })) };
     await mkdir(resolve(dir, 'artifacts'), { recursive: true });
     await writeFile(resolve(dir, 'artifacts/proof.json'), `${JSON.stringify(artifact, null, 2)}\n`);
     if (output) console.log(`Wrote ${resolve(dir, 'artifacts/proof.json')}`);

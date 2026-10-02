@@ -45,6 +45,16 @@ lanes; do not treat a specialist's partial test report as completion. For privac
 or cleanup claims, include a negative control or failure-path test that would
 detect the corresponding regression.
 
+For best-effort runtime APIs, a plausible result is not proof of validity. Test
+adjacent valid/invalid boundaries, not only wholly empty inputs; source-map
+checks must include unmapped code after mapped code and source-less segments.
+Establish allowed roots independently of observed input, and verify malformed
+diagnostic data cannot change application behavior. Check version-sensitive API
+availability against the installed runtime when documentation claims conflict.
+Successful decoding is not format validation: include unsupported versions and
+invalid syntax, and reject unsupported URL schemes before filesystem path
+normalization. Exercise privacy allowlists on failure diagnostics as well as success.
+
 ## Product checkpoints
 
 Periodically, and especially at milestone boundaries:

@@ -36,9 +36,11 @@ and retain a local artifact for inspection.
 
 This establishes causal linkage for a deliberately controlled, serialized
 interaction. It does not establish attribution for overlapping actions,
-background requests, redirects, cross-origin traffic, databases, or source
-locations. Application service spans are explicit instrumentation, not inferred
-function-level execution.
+background requests, redirects, cross-origin traffic, or databases. Application
+service spans are explicit instrumentation, not inferred function-level
+execution. The integrated test suite also exercises a separate compiled
+TypeScript source-attribution fixture; that narrow evidence and its limits are
+documented in [Source attribution proof](source-attribution-proof.md).
 
 ## Reproduce locally
 
@@ -52,8 +54,9 @@ npm test
 npm run proof
 ```
 
-The test command includes unit/lifecycle checks and a real Chromium run against
-the disposable local server. The standalone command writes
+The test command builds the TypeScript fixture, includes unit/lifecycle and
+source-attribution checks, and runs real Chromium against the disposable local
+server. The standalone command writes
 `experiments/correlation/artifacts/proof.json` (ignored by Git). On Ubuntu CI,
 install Chromium and its system dependencies with
 `npx playwright install --with-deps chromium`; the workflow then runs `npm
@@ -74,6 +77,9 @@ All of these execute through `npm test`. Repeating the standalone proof with
 `SPANTRAIL_CONTROL_DELAY_MS=200 npm run proof` also exercises delayed control
 completion without changing the attribution model.
 
+Source mapping cases and their assertions are mapped separately in
+[`docs/source-attribution-proof.md`](source-attribution-proof.md).
+
 ## Implementation boundary
 
 The fixture browser creates a fresh W3C trace context for each serialized,
@@ -81,8 +87,11 @@ same-origin action and injects it only to the intended API endpoint. In the
 server process, the OpenTelemetry Node SDK starts before the HTTP module is
 loaded; explicit `createRequire` loading after SDK startup activates the
 CommonJS instrumentation hook. An explicitly instrumented asynchronous service
-operation provides the application span. This is a narrow JavaScript/CommonJS
-experiment, not general ESM instrumentation or TypeScript application support.
+operation provides the application span. The browser-correlation server remains
+a narrow JavaScript/CommonJS experiment, not general ESM instrumentation. The
+integrated suite separately executes compiled TypeScript application fixture
+code for the limited explicit source-attribution proof; it is not general
+TypeScript application support.
 There is no external collector, LLM, or remote telemetry exporter in this
 proof.
 
@@ -91,9 +100,10 @@ proof.
 This is a serialized, controlled action rather than generic click attribution.
 It does not establish correct attribution for overlapping actions, background
 requests, redirects, or cross-origin traffic; trace databases; or recover
-source locations or inferred function-level execution. It does not demonstrate
-framework or language coverage. The application span is explicitly added, not
-automatically inferred.
+inferred function-level execution. It does not demonstrate framework or broad
+language coverage. The application span is explicitly added, not automatically
+inferred. Source-location behavior is limited to the controlled fixture and
+described in the linked proof; it is not general source capture.
 
 ## References
 
