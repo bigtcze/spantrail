@@ -1,3 +1,7 @@
 
 # Autonomous runner transient state
 .autonomous/runtime/
+
+# Correlation experiment output
+experiments/correlation/artifacts/
+node_modules/

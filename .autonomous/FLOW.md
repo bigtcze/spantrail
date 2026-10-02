@@ -37,6 +37,14 @@ Use browser automation for user-visible features whenever practical.
 
 Use disposable fixture applications for tracing/instrumentation tests.
 
+Before accepting delegated implementation, map each acceptance criterion to a
+specific executable assertion and inspect that the tested path is the runtime
+path. A passing helper test does not establish browser behavior when the browser
+uses different code. Run the integrated evidence path after reconciling parallel
+lanes; do not treat a specialist's partial test report as completion. For privacy
+or cleanup claims, include a negative control or failure-path test that would
+detect the corresponding regression.
+
 ## Product checkpoints
 
 Periodically, and especially at milestone boundaries:

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Browser-to-backend correlation · SpanTrail</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, sans-serif;
+        color: #24332e;
+        background: #f4f5f0;
+        line-height: 1.6;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: clamp(24px, 6vw, 72px) 20px;
+      }
+
+      main {
+        max-width: 640px;
+        margin-inline: auto;
+      }
+
+      .eyebrow {
+        margin: 0 0 24px;
+        color: #50645a;
+        font-size: 0.75rem;
+        font-weight: 650;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-family: ui-serif, Georgia, serif;
+        font-size: clamp(2rem, 6vw, 3rem);
+        font-weight: 500;
+        line-height: 1.15;
+        letter-spacing: -0.025em;
+        overflow-wrap: break-word;
+      }
+
+      .intro {
+        margin: 0 0 32px;
+        max-width: 58ch;
+        color: #506058;
+      }
+
+      .action-panel {
+        padding: clamp(20px, 4vw, 32px);
+        border: 1px solid #d5dcd3;
+        border-radius: 12px;
+        background: #fffefa;
+      }
+
+      .instruction { margin: 0 0 20px; }
+
+      button {
+        min-height: 48px;
+        padding: 12px 24px;
+        border: 1px solid #245342;
+        border-radius: 6px;
+        color: #ffffff;
+        background: #245342;
+        font: inherit;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      button:hover:not(:disabled) { background: #193e30; }
+
+      button:focus-visible {
+        outline: 3px solid #9a5d19;
+        outline-offset: 4px;
+      }
+
+      button:disabled {
+        color: #536158;
+        background: #e4e8e0;
+        border-color: #c6cfc3;
+        cursor: not-allowed;
+      }
+
+      .status-label {
+        margin: 28px 0 8px;
+        color: #506058;
+        font-size: 0.8125rem;
+        font-weight: 650;
+      }
+
+      #result {
+        margin: 0;
+        padding: 14px 16px;
+        border-left: 3px solid #9aab96;
+        background: #f0f3ec;
+        overflow-wrap: anywhere;
+      }
+
+      .scope {
+        margin: 24px 0 0;
+        color: #506058;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">SpanTrail / Local proof</p>
+      <h1>Browser-to-backend correlation</h1>
+      <p class="intro">
+        A controlled browser-to-backend experiment using HTTP instrumentation
+        and an explicit service span.
+      </p>
+
+      <section class="action-panel" aria-label="Run the experiment">
+        <p class="instruction">Run an action to send a request to the experiment backend.</p>
+        <button id="run-action" type="button">Run action</button>
+        <p class="status-label" id="status-label">Action status</p>
+        <p id="result" role="status" aria-live="polite" aria-atomic="true" aria-labelledby="status-label">No action completed yet.</p>
+      </section>
+
+      <p class="scope">
+        Scope: HTTP instrumentation + explicit service span. This fixture is
+        not a full application trace viewer.
+      </p>
+    </main>
+    <script type="module" src="./browser.js"></script>
+  </body>
+</html>
