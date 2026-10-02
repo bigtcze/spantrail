@@ -4,10 +4,20 @@ set -uo pipefail
 
 PROJECT="/home/tomas/repositories/spantrail"
 RUNTIME="$PROJECT/.autonomous/runtime"
-OPENCODE_BIN="$(command -v opencode || true)"
-
 export HOME="/home/tomas"
-export PATH="/home/tomas/.local/bin:/home/tomas/.bun/bin:/usr/local/bin:/usr/bin:/bin"
+export PATH="/home/tomas/.local/bin:/home/tomas/.bun/bin:/home/tomas/.opencode/bin:/home/tomas/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
+
+OPENCODE_BIN="/home/tomas/.opencode/bin/opencode"
+
+if [[ -z "$OPENCODE_BIN" ]]; then
+    for candidate in         /home/tomas/.opencode/bin/opencode         /home/tomas/.local/bin/opencode         /home/tomas/.bun/bin/opencode         /usr/local/bin/opencode         /usr/bin/opencode
+    do
+        if [[ -x "$candidate" ]]; then
+            OPENCODE_BIN="$candidate"
+            break
+        fi
+    done
+fi
 
 mkdir -p "$RUNTIME"
 cd "$PROJECT" || exit 1
@@ -81,7 +91,6 @@ while true; do
         --kill-after=60s \
         4h \
         "$OPENCODE_BIN" run \
-            --standalone \
             --auto \
             --agent orchestrator \
             --title "SpanTrail autonomous cycle $cycle" \
