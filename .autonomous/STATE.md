@@ -8,9 +8,10 @@ service correlation proof. General application capture and source attribution
 remain unproven.
 
 Repository status:
-Work is on `feat/local-correlation-proof`. The experiment, pinned dependencies,
-setup documentation, and a Chromium-backed GitHub Actions gate are ready for
-publication. No issues, open PRs, releases, or existing CI runs were present at
+Work is published on `feat/local-correlation-proof` in open PR
+https://github.com/bigtcze/spantrail/pull/1 (not merged). The experiment, pinned
+dependencies, setup documentation, and a Chromium-backed GitHub Actions gate
+are committed as `f3bcead`. No issues, open PRs, releases, or CI runs were present at
 cycle start. The branch also contains the pre-existing tooling-maintenance
 commit `13beb97`; the autonomous runner and guardrails were not modified.
 
@@ -40,7 +41,9 @@ Tested with Node.js 24.21.0, npm 11.19.0, and Playwright 1.63.0 Chromium.
   synchronization, and interrupted-cleanup defects; these were fixed and tested.
 - `git diff --check` and `npm audit --omit=dev`: passed; zero reported
   dependency vulnerabilities.
-- Remote CI must be checked on the PR before merge; local results are not a
+- Implementation commit `f3bcead` passed both push and pull-request Chromium CI
+  on GitHub's Node.js 24 Ubuntu runner (runs `37032149365` and `37032200752`).
+  Check the latest PR head before merge; earlier local/remote results are not a
   substitute for that gate.
 
 Immediate next action:
