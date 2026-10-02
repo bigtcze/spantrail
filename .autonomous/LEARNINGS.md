@@ -58,3 +58,22 @@ change future behaviour.
   now pass through the same exporter tripwire and schema/content allowlist.
   Verification preserved generic failure responses and trace hierarchy; this
   strengthens the existing failure-path rule without expanding product scope.
+
+## 2026-10-02 — Verify artifact consumers from a clean start
+
+- The viewer's first server test passed locally because an ignored proof artifact
+  already existed, but `npm test` runs unit tests before generating it. Independent
+  review found this fresh-checkout failure despite a passing browser gate. Server
+  tests now own temporary fixtures; FLOW requires removing the relevant ignored
+  output before verifying new artifact consumers. Removing `proof.json` and running
+  the full gate passed: 37 tests, a fresh tracing proof, and viewer Chromium E2E.
+- The first validator tests again accepted invalid inputs through a confound:
+  changing only the action trace to zero failed for missing matching spans, not
+  invalid identity. Consistent zero IDs now have regressions independent of graph
+  errors. Depth 63/64/65 and correlation/exported-ID collisions bind parser and
+  builder acceptance. Keep invalid-input tests valid in unrelated dimensions.
+- A size check after `readFile` did not bound resource use. The viewer now reads
+  at most 1 MiB + 1 byte, handles short reads, closes file handles, and shares
+  concurrent reads. Tests exercise short/growing inputs; independent diagnostics
+  checked exact-size boundaries and overlapping requests. Limits must apply at
+  the resource boundary, not only after parsing.
