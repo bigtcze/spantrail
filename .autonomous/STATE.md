@@ -11,8 +11,11 @@ Repository status:
 At cycle start, the worktree was clean, no issues were open, and PR #2's latest
 push/pull-request checks were green with no feedback outstanding. Integrated
 the independently reviewed source-attribution work by merging PR #2 as `a7299b8`;
-main CI run `37048994770` passed. Viewer work is on
-`feat/local-artifact-viewer`; publication details will be recorded after pushing.
+main CI run `37048994770` passed. Viewer implementation `9876223` is published
+on `feat/local-artifact-viewer` in open PR
+https://github.com/bigtcze/spantrail/pull/3 (not merged). Both its push and
+pull-request CI passed. The publication-record commit changes only this state
+file; check the latest head gate before merging.
 
 ## Changes in this cycle
 
@@ -51,7 +54,10 @@ Tested with Node.js 24.21.0, npm 11.19.0, TypeScript 6.0.3, and Playwright 1.63.
   and non-string IDs, count limits, and adjacent source-path bounds.
 - Viewer CLI served the real two-action artifact and exited cleanly on SIGTERM;
   the final 10 focused viewer tests passed after documentation/copy cleanup.
-- `git diff --check`: passed. Latest viewer branch CI will be checked on publication.
+- `git diff --check`: passed.
+- Implementation `9876223` passed push CI run `37051897112` and pull-request CI
+  run `37051902517` on GitHub's Node.js 24 Ubuntu runner, including lockfile
+  installation, all 37 tests, the fresh Chromium proof, and viewer Chromium E2E.
 
 Immediate next action:
 Resolve viewer PR/CI feedback and integrate it first. Then measure installation
