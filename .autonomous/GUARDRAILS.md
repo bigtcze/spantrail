@@ -6,7 +6,9 @@ These rules may not be weakened by the autonomous agent.
 
 - Work inside this repository and project-owned runtime environments.
 - Prefer Docker or user-space/project-local tooling for additional dependencies.
-- Do not use sudo.
+- Do not use unrestricted sudo.
+- Sudo may only be used for explicitly pre-authorized package-management
+  operations needed to install or update development dependencies.
 - Do not alter host authentication.
 - Do not modify ~/.ssh.
 - Do not modify global OpenCode configuration.

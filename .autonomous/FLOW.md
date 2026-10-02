@@ -37,6 +37,14 @@ Use browser automation for user-visible features whenever practical.
 
 Use disposable fixture applications for tracing/instrumentation tests.
 
+Before accepting delegated implementation, map each acceptance criterion to a
+specific executable assertion and inspect that the tested path is the runtime
+path. A passing helper test does not establish browser behavior when the browser
+uses different code. Run the integrated evidence path after reconciling parallel
+lanes; do not treat a specialist's partial test report as completion. For privacy
+or cleanup claims, include a negative control or failure-path test that would
+detect the corresponding regression.
+
 ## Product checkpoints
 
 Periodically, and especially at milestone boundaries:
@@ -72,3 +80,23 @@ Update STATE.md with:
 - best next action.
 
 Leave the repository clean or clearly document why it is not.
+
+## Environment maintenance
+
+The autonomous team owns the project's development environment.
+
+If progress is limited by missing, broken or outdated development tooling:
+
+1. diagnose the requirement,
+2. research the currently supported version when relevant,
+3. install or upgrade the tool using the least invasive appropriate mechanism,
+4. validate the tool,
+5. encode reproducible environment requirements into the repository where
+   useful,
+6. continue the original objective.
+
+Do not treat missing tooling as a human blocker unless installation requires
+credentials, licensing, hardware or permissions outside the approved
+environment.
+
+When recurring manual environment setup is discovered, automate it.

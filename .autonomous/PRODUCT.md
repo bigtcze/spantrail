@@ -1,6 +1,6 @@
 # Current Product Strategy
 
-Status: discovery / bootstrap
+Status: technical feasibility; controlled browser-to-backend correlation proven
 
 ## Current hypothesis
 
@@ -18,13 +18,25 @@ Desired first-demo experience:
 
 ## Current priorities
 
-1. Research the exact technical feasibility and closest competitors.
-2. Build a disposable reference application for experiments.
-3. Prove reliable browser -> backend trace correlation.
-4. Prove source-code attribution.
-5. Produce the smallest compelling visual prototype.
-6. Measure setup friction.
-7. Only then expand supported technologies.
+1. Keep the controlled correlation proof green locally and in CI.
+2. Prove trustworthy source-code attribution with a small Node.js/TypeScript
+   fixture, including source maps where relevant.
+3. Produce the smallest compelling visual prototype from observed evidence.
+4. Measure setup friction.
+5. Only then expand supported technologies.
+
+## Evidence and limits
+
+The initial local fixture and Chromium experiment now demonstrate two serialized
+button actions correlated with real auto-instrumented Node.js HTTP spans and
+explicit asynchronous service spans. Parent IDs, trace IDs, request headers,
+durations, and visible completion are tested. See
+[`docs/correlation-proof.md`](../docs/correlation-proof.md).
+
+This establishes the controlled boundary, not generic interaction attribution or
+automatic application-code capture. Overlapping actions, cross-origin requests,
+redirects, databases, and source locations remain unproven. AppMap and Jaeger are
+useful reference points; the proof does not establish a comparative advantage.
 
 This file is intentionally mutable.
 Update it when evidence changes the product strategy.

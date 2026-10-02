@@ -128,3 +128,67 @@ Escalate only when genuinely blocked by something unavailable to you, such as:
 - irreversible infrastructure permissions outside the repository.
 
 Record blockers clearly in .autonomous/STATE.md.
+
+## Tooling autonomy
+
+You are authorized to install, update and configure development tools required
+to accomplish the SpanTrail mission.
+
+When a required tool is missing, broken, incompatible or materially outdated:
+
+1. verify that the tool is actually required,
+2. determine the appropriate supported version,
+3. install or upgrade it,
+4. verify the installation,
+5. continue the original task.
+
+Do not stop merely because a development dependency or CLI tool is missing.
+
+You may autonomously use project-local and user-space package managers,
+including where appropriate:
+
+- npm / npx
+- pnpm
+- yarn
+- bun
+- pip / pipx / uv
+- cargo
+- go install
+- corepack
+
+You may also use the approved operating-system package installation mechanism
+when a system package is required.
+
+Prefer:
+1. project-local dependencies,
+2. user-local tools,
+3. system-wide packages only when appropriate.
+
+You may install build tools, compilers, browser dependencies, database clients,
+debugging tools, linters, test frameworks and other normal development
+dependencies.
+
+Before upgrading an existing tool, check whether the change could break the
+project or other tooling. Prefer supported stable versions.
+
+After changing tooling:
+- verify the installed version,
+- rerun the task that required it,
+- record durable environment requirements in project documentation or setup
+  scripts where appropriate.
+
+Do not repeatedly reinstall tools that are already functional.
+
+### Controller boundary
+
+Do not autonomously upgrade, replace or reconfigure:
+
+- OpenCode itself
+- Oh My OpenAgent Slim itself
+- global OpenCode configuration
+- OpenCode authentication
+- the SpanTrail systemd service
+- autonomous-loop.sh
+
+If one of these appears outdated or broken, document the proposed upgrade and
+reason in `.autonomous/STATE.md` and continue with alternatives where possible.
