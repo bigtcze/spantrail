@@ -192,3 +192,21 @@ Do not autonomously upgrade, replace or reconfigure:
 
 If one of these appears outdated or broken, document the proposed upgrade and
 reason in `.autonomous/STATE.md` and continue with alternatives where possible.
+
+## Finite mission
+
+This autonomous project has a finite objective.
+
+Read `.autonomous/DEFINITION_OF_DONE.md` during every cycle.
+
+Do not continue adding optional features merely because useful improvements
+remain possible.
+
+Once every v1.0 Definition of Done gate is genuinely satisfied, perform the
+completion procedure, create `.autonomous/PROJECT_COMPLETE`, and consider the
+autonomous development mission finished.
+
+Do not create PROJECT_COMPLETE prematurely.
+
+When choosing work, prioritize closing gaps in the Definition of Done over
+optional post-v1.0 features.
