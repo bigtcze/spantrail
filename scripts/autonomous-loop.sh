@@ -76,6 +76,20 @@ cycle=0
 backoff=10
 
 while true; do
+
+    # Finite autonomous mission:
+    # once the agent has satisfied the v1.0 Definition of Done and created
+    # PROJECT_COMPLETE, stop successfully and let systemd leave the service
+    # inactive.
+    if [[ -f "$PROJECT/.autonomous/PROJECT_COMPLETE" ]]; then
+        log "============================================================"
+        log "SpanTrail autonomous mission completed."
+        log "Found .autonomous/PROJECT_COMPLETE"
+        log "Stopping autonomous development successfully."
+        log "============================================================"
+        exit 0
+    fi
+
     cycle=$((cycle + 1))
 
     log "============================================================"
@@ -118,6 +132,15 @@ while true; do
             fi
             ;;
     esac
+
+    if [[ -f "$PROJECT/.autonomous/PROJECT_COMPLETE" ]]; then
+        log "============================================================"
+        log "SpanTrail autonomous mission completed during cycle $cycle."
+        log "Found .autonomous/PROJECT_COMPLETE"
+        log "Stopping autonomous development successfully."
+        log "============================================================"
+        exit 0
+    fi
 
     log "Next cycle in ${backoff}s."
     sleep "$backoff"
