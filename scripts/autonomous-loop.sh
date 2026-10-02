@@ -4,6 +4,7 @@ set -uo pipefail
 
 PROJECT="/home/tomas/repositories/spantrail"
 RUNTIME="$PROJECT/.autonomous/runtime"
+OPENCODE_BIN="$(command -v opencode || true)"
 
 export HOME="/home/tomas"
 export PATH="/home/tomas/.local/bin:/home/tomas/.bun/bin:/usr/local/bin:/usr/bin:/bin"
@@ -15,39 +16,51 @@ log() {
     printf '%s %s\n' "$(date --iso-8601=seconds)" "$*"
 }
 
-OPENCODE_BIN="$(command -v opencode || true)"
-
 if [[ -z "$OPENCODE_BIN" ]]; then
-    log "ERROR: opencode not found in PATH"
+    log "ERROR: opencode not found"
     exit 10
 fi
 
-log "Using OpenCode: $OPENCODE_BIN"
-"$OPENCODE_BIN" --version || exit 11
+log "OpenCode: $("$OPENCODE_BIN" --version)"
 
-# Do not allow two autonomous loops for the same repository.
-LOCKFILE="$RUNTIME/runner.lock"
-exec 9>"$LOCKFILE"
-
+# Only one autonomous supervisor may run for this repository.
+exec 9>"$RUNTIME/runner.lock"
 if ! flock -n 9; then
     log "Another SpanTrail autonomous runner is already active."
     exit 0
 fi
 
-# Headless autonomy requires --auto unless all permissions have already
-# been explicitly configured to allow/deny without interaction.
+# Validate project control files.
+required_files=(
+    "AGENTS.md"
+    ".autonomous/CHARTER.md"
+    ".autonomous/PRODUCT.md"
+    ".autonomous/FLOW.md"
+    ".autonomous/STATE.md"
+    ".autonomous/LEARNINGS.md"
+    ".autonomous/GUARDRAILS.md"
+    ".autonomous/CYCLE_PROMPT.md"
+)
+
+for file in "${required_files[@]}"; do
+    if [[ ! -f "$file" ]]; then
+        log "ERROR: required file missing: $file"
+        exit 11
+    fi
+done
+
+# Validate features required for unattended operation.
 if ! "$OPENCODE_BIN" run --help 2>&1 | grep -q -- '--auto'; then
-    log "ERROR: this OpenCode build does not expose 'run --auto'."
-    log "Check OpenCode version/permissions before enabling autonomous mode."
+    log "ERROR: opencode run does not support --auto"
     exit 12
 fi
 
-# Oh My OpenAgent Slim should expose Ra as the orchestrator.
-if ! "$OPENCODE_BIN" agent list 2>&1 | grep -qiE '(^|[[:space:]])Ra([[:space:]]|$)'; then
-    log "ERROR: Ra agent was not found."
-    log "Check: opencode agent list"
+if ! "$OPENCODE_BIN" agent list 2>&1 | grep -q '^orchestrator (primary)'; then
+    log "ERROR: primary agent 'orchestrator' not found"
     exit 13
 fi
+
+log "Autonomous runner initialized successfully."
 
 cycle=0
 backoff=10
@@ -58,12 +71,6 @@ while true; do
     log "============================================================"
     log "Starting autonomous cycle $cycle"
     log "============================================================"
-
-    if [[ ! -f ".autonomous/CYCLE_PROMPT.md" ]]; then
-        log "ERROR: .autonomous/CYCLE_PROMPT.md is missing"
-        sleep 300
-        continue
-    fi
 
     PROMPT="$(cat .autonomous/CYCLE_PROMPT.md)"
 
@@ -76,28 +83,32 @@ while true; do
         "$OPENCODE_BIN" run \
             --standalone \
             --auto \
-            --agent Ra \
+            --agent orchestrator \
+            --title "SpanTrail autonomous cycle $cycle" \
             "$PROMPT"
 
     rc=$?
 
     set -e
 
-    if [[ "$rc" -eq 0 ]]; then
-        log "Cycle $cycle completed successfully."
-        backoff=10
-    elif [[ "$rc" -eq 124 ]]; then
-        log "WARNING: cycle $cycle exceeded 4 hours and was terminated."
-        backoff=60
-    else
-        log "WARNING: cycle $cycle exited with code $rc."
+    case "$rc" in
+        0)
+            log "Cycle $cycle completed successfully."
+            backoff=10
+            ;;
+        124)
+            log "WARNING: cycle $cycle exceeded four hours and was terminated."
+            backoff=60
+            ;;
+        *)
+            log "WARNING: cycle $cycle exited with code $rc."
+            backoff=$((backoff * 2))
 
-        backoff=$((backoff * 2))
-
-        if (( backoff > 900 )); then
-            backoff=900
-        fi
-    fi
+            if (( backoff > 900 )); then
+                backoff=900
+            fi
+            ;;
+    esac
 
     log "Next cycle in ${backoff}s."
     sleep "$backoff"

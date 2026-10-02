@@ -19,7 +19,7 @@ Then inspect:
 - currently available tools,
 - relevant GitHub issues / pull requests / CI.
 
-Use Ra's orchestration and delegate to the available Oh My OpenAgent Slim
+Use the configured Oh My OpenAgent Slim orchestrator and delegate to the available Oh My OpenAgent Slim
 specialist agents when that improves research, implementation, review or QA.
 
 Determine the single highest-value next outcome and actually execute the work.
