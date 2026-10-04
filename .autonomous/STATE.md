@@ -9,11 +9,11 @@ single-command controlled demo are verified together. The v1.0 Definition of Don
 is not satisfied; this remains a controlled fixture, not application integration.
 
 Repository status:
-This cycle began clean on `feat/controlled-demo` at `ad157f9`. The original demo
-implementation PR #4 passed CI at its published head; a follow-up regression fix
-is now in the local tracked patch and remains pending publication, current-head CI,
-and merge. Do not treat it as merged. Original-head push run `37188453440` and
-PR run `37188455979` passed; they are not evidence for the follow-up patch.
+This cycle began clean on `feat/controlled-demo` at `ad157f9`. Follow-up commit
+`8d9424d` passed push CI `37190823249` and PR CI `37190825176`. PR #4
+(https://github.com/bigtcze/spantrail/pull/4) merged as `4acc77a`; main CI
+`37190890522` passed the fresh install/browser/full-test gate. Local main is
+synchronized with origin. This final publication record is documentation-only.
 No open issues or other PRs were found. No known blockers.
 
 ## Changes in this cycle
@@ -60,10 +60,12 @@ Chromium `153.0.8010.12`; pinned image digest above.
   or a reproducibility guarantee.
 
 Immediate next action:
-Publish the PR #4 follow-up, wait for CI on its exact head, and merge only after it
-passes. Then prioritize validating a reusable conventional Node backend
-application integration to close the Definition of Done gap; do not claim framework
-support before validation.
+Prioritize validating a reusable conventional Node backend application integration
+to close the Definition of Done gap; do not claim framework support before
+validation. Preserve current correlation, privacy, source-attribution, fresh-artifact,
+and cleanup gates. CI also warns about deprecated action runtimes and an upcoming
+ubuntu-latest migration; pin/update those deliberately when addressing CI tooling,
+not by changing host/controller configuration.
 
 Known blockers:
 None.
