@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { startViewer } from './server.js';
 
-const proofPath = resolve('experiments/correlation/artifacts/proof.json');
+const proofPath = resolve(process.env.SPANTRAIL_ARTIFACT_PATH ?? 'experiments/correlation/artifacts/proof.json');
 const original = JSON.parse(await readFile(proofPath, 'utf8'));
 const temp = await mkdtemp(join(tmpdir(), 'spantrail-viewer-e2e-'));
 const artifactPath = join(temp, 'artifact.json');

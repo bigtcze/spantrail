@@ -9,12 +9,17 @@
   "type": "module",
   "scripts": {
     "build": "node experiments/source-attribution/build.js",
-    "test": "npm run test:unit && npm run proof && npm run test:viewer",
+    "test": "npm run test:unit && npm run test:express && npm run proof && npm run proof:express && npm run test:viewer:express && npm run test:viewer",
     "pretest:unit": "npm run build",
     "test:unit": "node --test experiments/correlation/*.test.js experiments/source-attribution/*.test.js experiments/viewer/*.test.js experiments/demo/*.test.js",
+    "pretest:express": "npm run build",
+    "test:express": "node --test experiments/express/*.test.js",
     "preproof": "npm run build",
     "proof": "node experiments/correlation/run.js",
     "test:viewer": "node experiments/viewer/e2e.js",
+    "preproof:express": "npm run build",
+    "proof:express": "node experiments/express/run.js",
+    "test:viewer:express": "SPANTRAIL_ARTIFACT_PATH=experiments/express/artifacts/express-proof.json node experiments/viewer/e2e.js",
     "viewer": "node experiments/viewer/server.js",
     "demo": "node experiments/demo/run.js"
   },
@@ -28,6 +33,7 @@
     "@opentelemetry/instrumentation-http": "0.222.0",
     "@opentelemetry/sdk-node": "0.222.0",
     "@opentelemetry/sdk-trace-base": "2.11.0",
+    "express": "5.2.1",
     "playwright": "1.63.0"
   }
 }

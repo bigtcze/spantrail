@@ -15,6 +15,15 @@ change future behaviour.
   unfamiliar-developer five-minute gate. FLOW now requires this evidence format
   and separates manual URL opening from measured automation.
 
+## 2026-10-04 — Verify browser-served module behavior, not only status codes
+
+- A framework fixture's asset checks passed with HTTP 200 while incorrect
+  JavaScript MIME types caused real Chromium module loading to time out. The
+  Express checks now assert content types, and both fresh Chromium proof/viewer
+  paths passed. FLOW requires MIME assertions plus awaited browser execution and
+  resulting behavior for framework-served modules, preventing a status-only
+  server test from being mistaken for a working browser integration.
+
 ## 2026-10-04 — Keep process cleanup claims cooperative
 
 - Supervising Playwright's default detached children added complexity and regressions: forcing `detached: false` conflicts with Playwright's internal negative-PGID kills. Removing that attempted containment was safer than claiming hard containment. Cleanup tests must also cover a launch promise that fulfills after its shutdown deadline and a falsy rejection; a broad suite (51 tests) had missed those boundaries, while later regression verification covered 64 unit tests, fresh proof, and viewer. A fake that reused an already-exited emitter left an await unsettled, and an inline test had invalid JavaScript, so validate test harnesses against real lifecycle semantics.

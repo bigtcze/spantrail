@@ -55,8 +55,8 @@ npm run proof
 ```
 
 The test command builds the TypeScript fixture, includes unit/lifecycle and
-source-attribution checks, and runs real Chromium against the disposable local
-server. The standalone command writes
+source-attribution checks, generates both real Chromium proof artifacts, and runs
+the viewer E2E against both. The standalone command writes
 `experiments/correlation/artifacts/proof.json` (ignored by Git). On Ubuntu CI,
 install Chromium and its system dependencies with
 `npx playwright install --with-deps chromium`; the workflow then runs `npm
@@ -78,7 +78,58 @@ All of these execute through `npm test`. Repeating the standalone proof with
 completion without changing the attribution model.
 
 Source mapping cases and their assertions are mapped separately in
-[`docs/source-attribution-proof.md`](source-attribution-proof.md).
+[`docs/source-attribution-proof.md`](source-attribution-proof.md). A separate,
+narrow conventional-backend integration proof is documented below.
+
+## Express 5.2.1 CommonJS integration proof
+
+This disposable fixture validates Express 5.2.1 (MIT) on Node.js 24.21.0 using
+CommonJS preload instrumentation. It is a validation experiment, not a reusable
+production SDK or general Express support claim. The fixed span-name and route
+allowlists and explicit controlled-fixture source helper in
+`experiments/runtime/local-tracing.cjs` do not capture arbitrary application
+routes, functions, or source locations. The app explicitly imports the local
+runtime's snapshot and shutdown support. This is not an arbitrary app CLI
+wrapper, ESM integration, or Express route/layer/function auto-capture; it adds
+no collector.
+
+Reproduce from the repository root with dependencies and Chromium already
+installed:
+
+```sh
+npm run test:express
+npm run proof:express
+npm run test:viewer:express
+SPANTRAIL_ARTIFACT_PATH=experiments/express/artifacts/express-proof.json npm run test:viewer
+```
+
+`test:express` runs the Node tests (and builds first); `proof:express` runs the
+real browser proof and writes the Express artifact; `test:viewer:express` runs
+the viewer browser gate against that artifact. The final command independently
+selects it through the viewer's existing `SPANTRAIL_ARTIFACT_PATH` option.
+`npm test` includes these Express and viewer gates. The artifact is ignored local
+output; generate it before invoking either viewer gate directly.
+
+The executed checks cover two real serialized Chromium actions through Express
+and the same mapped controlled TypeScript service spans as the existing proof,
+plus an independent ordinary app request with explicit spans and an unknown
+source result. They verify parentage, an Express 5 generic promise rejection
+returning a sanitized 500 and recovery on a later request, hostile OTEL exporter
+settings producing no HTTP(S) attempts through SDK shutdown (with an existing
+working negative control), and a fail-closed snapshot boundary: 1,000 completed
+spans are accepted by the actual viewer parser, while span 1,001 makes snapshot
+fail as incomplete. HTTP failure/recovery is tested directly; it is not represented
+as a browser error artifact. The viewer is exercised against both correlation and
+Express artifacts. These are fixture assertions, not broader UX, setup-time, or
+performance claims.
+
+`SPANTRAIL_ARTIFACT_PATH` selects the artifact for viewer E2E tests; it does not
+configure the normal interactive viewer command. The 1,000 bound is on completed
+span count only; it does not bound arbitrary span attributes, in-flight spans, or
+total process heap. Snapshot output sanitization is not collection prevention.
+Cooperative shutdown deadlines do not guarantee flush or drain. Mapped source
+attribution remains limited to the explicitly instrumented controlled TypeScript
+fixture and its approved source map; other spans report unknown.
 
 ## Implementation boundary
 

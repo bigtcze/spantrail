@@ -3,82 +3,75 @@
 Project phase: controlled prototype
 
 Current milestone:
-Controlled browser action -> Node.js HTTP -> asynchronous service correlation,
-explicit compiled-TypeScript source attribution, local artifact viewer, and a
-single-command controlled demo are verified together. The v1.0 Definition of Done
-is not satisfied; this remains a controlled fixture, not application integration.
+Controlled browser-to-Node correlation, explicit compiled-TypeScript source
+attribution, local artifact viewer, and focused Express conventional-backend
+integration validation. The v1.0 Definition of Done remains unsatisfied; this is
+not yet a reusable application integration or conventional-framework support claim.
 
 Repository status:
-This cycle began clean on `feat/controlled-demo` at `ad157f9`. Follow-up commit
-`8d9424d` passed push CI `37190823249` and PR CI `37190825176`. PR #4
-(https://github.com/bigtcze/spantrail/pull/4) merged as `4acc77a`; main CI
-`37190890522` passed the fresh install/browser/full-test gate. Local main is
-synchronized with origin. This final publication record is documentation-only.
-No open issues or other PRs were found. No known blockers.
+This engineering cycle began on clean, synchronized `main` at `2e4746f`, with green
+CI run `37190989904` and no open PRs or issues. It created
+`feat/express-integration` and implemented runtime, Express fixture, proof options,
+viewer artifact selection, and dependency changes; these are engineering-cycle
+changes, not pre-existing or user-owned work. Publication (commit, push, and PR)
+is pending, and CI for the branch is pending. No completion or final CI result is
+claimed.
 
 ## Changes in this cycle
 
-- Recorded a cold Linux amd64 Debian 12 / Node 24 setup observation from a pinned
-  `node:24-bookworm` image (`node@sha256:64af3819f9275802414d7cdc38c27e9d82bd564dec4d4da87d008255d36c63b4`), with a fresh source archive plus tracked patch and no host dependency/browser caches.
-- The full gate passed cold: 65 tests, fresh proof generation, and integrated viewer
-  Chromium E2E. A separate awaited production viewer inspection verified two
-  actions, the `/api/action` -> service -> after-await source chain and exact
-  `service.cts:25:20` attribution; switching to action 2 showed unknown source.
-- Sequential setup measured `npm ci` at 1.589s, `npx playwright install
-  --with-deps chromium` at 23.561s, and demo launch through awaited browser
-  inspection at 2.288s. Start-to-inspection total was 27.531s, including browser
-  close. This scoped machine observation excludes image/source provisioning,
-  preinstalled Node/npm, and a human manually opening the URL; setup downloads
-  depend on network. It is not a benchmark or evidence for the five-minute human
-  unfamiliar-developer v1 gate. A plain-install missing `libnspr4.so` probe was
-  resolved by the documented `--with-deps` installation fallback.
-- The follow-up cleanup-first regression previously failed with intent 130 rather
-  than 1; it now passes. Cleanup exceptions notify `onFailure` immediately while
-  preserving `AggregateError` and signal/operation-first exit-intent order.
-  Independent review of the original PR found no blockers (36 focused / 64 all);
-  follow-up review found no blockers (31 focused), with added falsy-rejection and
-  observer assertions.
-- README and viewer guide clarify that users open the printed URL manually.
-  FLOW/LEARNINGS now require timestamped sequential measurement harnesses, awaited
-   decisive assertions, saved raw logs/machine timings, and environment snapshots.
-   Guardrails, host configuration, authentication, and controller remain unchanged.
+- Documented the narrow Express 5.2.1 MIT / Node 24.21.0 CommonJS preload
+  validation and exact reproduction commands, including both artifact viewer
+  paths.
+- Recorded explicit limits: fixture-hardcoded allowlists and source helper,
+  explicit snapshot/shutdown imports, no arbitrary CLI/ESM/route-layer-function
+  capture or collector, and no general framework-support claim.
+- Reconciled the Express proof and README reproduction steps, including the `npm
+  test` gates, the viewer's artifact-path option, and Express's MIT license.
+- Recorded the two serialized real-browser actions, explicit independent app
+  span/unknown source, failure/recovery, hostile OTEL no-network check, and
+  fail-closed 1,000 completed-span snapshot bound. The actual viewer parser accepts
+  exactly 1,000 and rejects 1,001. Direct HTTP failure/recovery assertions are not
+  described as a browser error artifact. The bound does not cover arbitrary
+  attributes, in-flight spans, or total heap, and output sanitization does not
+  prevent collection.
+- Recorded that cooperative shutdown deadlines do not guarantee flush or drain.
+- Recorded the observed browser-module MIME failure and added a concise FLOW check
+  requiring content-type and awaited runtime-behavior assertions beyond HTTP 200.
+  MIME assertions and both fresh Chromium paths passed.
 
 ## Verification
 
-Cold image: Debian 12 bookworm, Node `v24.21.0`, npm `11.19.0`, Playwright
-Chromium `153.0.8010.12`; pinned image digest above.
-
-- `npm test` cold: all 65 tests passed, fresh Chromium tracing proof generated,
-  and integrated real-artifact viewer Chromium E2E passed.
-- Awaited production viewer probe validated two actions and exact nested
-  HTTP/service/after-await evidence/source plus action switching and unknown
-  attribution. Child SIGINT cleanup stopped HTTP and released the exact port.
-- Final cold demo-child SIGINT exited 130 and released the port; prior QA separately
-  verified SIGTERM exit 143 and port release.
-- Raw QA logs and probe outputs are retained in `/tmp/opencode` on this machine;
-  those ephemeral paths are evidence for this run, not portable repository assets
-  or a reproducibility guarantee.
+The orchestrator's latest full `npm test` passed: 65 existing tests plus four
+Express tests, both real Chromium proof generations, and both viewer E2E paths.
+`npm ls` confirmed pinned Express 5.2.1, and `git diff --check` passed. Generated
+artifacts were removed before a fresh verification by the fixer. Independent oracle
+review found no blockers; it found and prompted correction of the 2,000/1,000
+snapshot-bound mismatch, verified that the actual viewer parser accepts exactly
+1,000 and rejects 1,001, and prompted a GET-names regression test. These results
+are pre-publication evidence; branch CI remains pending.
 
 Immediate next action:
-Prioritize validating a reusable conventional Node backend application integration
-to close the Definition of Done gap; do not claim framework support before
-validation. Preserve current correlation, privacy, source-attribution, fresh-artifact,
-and cleanup gates. CI also warns about deprecated action runtimes and an upcoming
-ubuntu-latest migration; pin/update those deliberately when addressing CI tooling,
-not by changing host/controller configuration.
+After independent review and publication checks, prioritize a reusable integration
+that supports an actual user-owned CommonJS app without fixture-specific allowlists
+or app-imported snapshot/shutdown plumbing; alternatively choose another open v1.0
+Definition of Done gap based on evidence. Do not generalize the current Express
+fixture into a broad support claim.
 
 Known blockers:
-None.
+None reported.
 
 Known scope limits:
 No generic click attribution, overlapping-action proof, cross-origin/redirect
-attribution, database tracing, automatic function capture, or general
-TypeScript/framework support. Viewer is a read-only snapshot, not live capture or
-a timeline; it loads no source content. Only action-trace graph completeness,
-cycles, and depth are validated; unrelated spans are schema-validated and excluded.
-Depth-64 usability is not browser-proven. Source attribution is only for explicit
-calls in the compiled fixture; map authenticity, source content integrity, and
-symlink containment are not established. Cooperative shutdown does not guarantee
-cleanup after parent SIGKILL, permanently hung custom launchers, or OS/process
-failure. No unconditional descendant containment or five-minute unfamiliar-user
-clean-install claim has been established.
+attribution, database tracing, or automatic function capture. The Express runtime
+is a fixture-specific CommonJS preload experiment with hardcoded route/name
+allowlists and a controlled source helper, not arbitrary app CLI/ESM/framework
+capture. The Express app explicitly imports snapshot/shutdown support. The 1,000
+limit applies only to completed spans and does not bound attributes, in-flight
+spans, or total heap; sanitizing snapshot output does not prevent collection.
+Viewer is a read-only snapshot, not live capture or a timeline; it loads no source
+content. Source attribution is limited to explicit calls in the compiled fixture;
+map authenticity, source content integrity, and symlink containment are not
+established. Cooperative shutdown deadlines do not guarantee flush or drain;
+cleanup is not guaranteed after parent SIGKILL, permanently hung custom
+launchers, or OS/process failure. No unconditional descendant containment or
+five-minute unfamiliar-user clean-install claim has been established.
