@@ -5,6 +5,23 @@ Record process improvements, disproved assumptions and durable lessons here.
 Do not turn this into a raw activity log. Only record information that should
 change future behaviour.
 
+## 2026-10-04 — Reconcile capture contracts and delegated test scope
+
+- OpenTelemetry's exporter contract is mixed: `export` uses a callback, while
+  `forceFlush` and `shutdown` return promises. An overbroad correction broke export;
+  inspecting the installed declarations and implementation resolved the mismatch.
+- Initial coverage confused SIGTERM exit with successful SDK shutdown and used
+  `process.exit` to test natural exit. A malformed-status case actually used valid
+  ERROR code 2, and a browser test searched for a random trace ID it never sent.
+  Concrete acknowledgement, finite-app, valid/invalid metadata, and actual browser
+  context assertions now cover these boundaries. Exact startup span counts replaced
+  existential checks that independent review proved could pass despite omission.
+- Several delegated passes returned only part of their requested test scope.
+  Reconcile each criterion to its actual assertion and narrow follow-up ownership;
+  don't repeatedly reissue broad task lists. FLOW now records the signature and
+  lifecycle checks. The full 81-test gate and browser/viewer paths passed, and the
+  final strengthened startup assertion passed separately.
+
 ## 2026-10-04 — Measure onboarding with awaited evidence
 
 - Two delegated QA passes failed to capture the required full elapsed clock or

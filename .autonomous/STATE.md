@@ -4,78 +4,75 @@ Project phase: controlled prototype
 
 Current milestone:
 Controlled browser-to-Node correlation, explicit compiled-TypeScript source
-attribution, local artifact viewer, and focused Express conventional-backend
-integration validation. The v1.0 Definition of Done remains unsatisfied; this is
-not yet a reusable application integration or conventional-framework support claim.
+attribution, local artifact viewer, Express validation, and a narrow reusable
+programmatic CommonJS capture session. The v1.0 Definition of Done remains
+unsatisfied. This is not a public package or broad framework-support claim.
 
 Repository status:
-This engineering cycle began on clean, synchronized `main` at `2e4746f`, with green
-CI run `37190989904` and no open PRs or issues. It created
-`feat/express-integration` and implemented runtime, Express fixture, proof options,
-viewer artifact selection, and dependency changes; these are engineering-cycle
-changes, not pre-existing or user-owned work. Implementation commit `3f0285f` was
-pushed and PR #5 opened: https://github.com/bigtcze/spantrail/pull/5. Push CI
-`37202193071` and PR CI `37202209242` both passed the fresh install, Chromium,
-and full-test gate. The reviewed PR remains open, with no known blockers; this
-publication record is a documentation-only follow-up. The v1.0 mission is not complete.
+This cycle began on clean, synchronized `feat/express-integration` at `3bfc982`,
+with PR #5 green and no open issues. The reviewed PR was merged as `114c0a3`;
+main CI `37202510719` passed. This cycle created `feat/commonjs-local-capture`.
+All capture, test, package-script, and documentation changes are engineering-cycle
+work, not pre-existing or user-owned modifications. Implementation commit `e4df8ba`
+was pushed and PR #6 opened: https://github.com/bigtcze/spantrail/pull/6.
+Push CI `37205129569` and PR CI `37205150150` both passed the fresh-install,
+Chromium, and complete test gate. This publication record is a documentation-only
+follow-up. The independently reviewed PR remains open; the v1.0 mission is not complete.
 
 ## Changes in this cycle
 
-- Documented the narrow Express 5.2.1 MIT / Node 24.21.0 CommonJS preload
-  validation and exact reproduction commands, including both artifact viewer
-  paths.
-- Recorded explicit limits: fixture-hardcoded allowlists and source helper,
-  explicit snapshot/shutdown imports, no arbitrary CLI/ESM/route-layer-function
-  capture or collector, and no general framework-support claim.
-- Reconciled the Express proof and README reproduction steps, including the `npm
-  test` gates, the viewer's artifact-path option, and Express's MIT license.
-- Recorded the two serialized real-browser actions, explicit independent app
-  span/unknown source, failure/recovery, hostile OTEL no-network check, and
-  fail-closed 1,000 completed-span snapshot bound. The actual viewer parser accepts
-  exactly 1,000 and rejects 1,001. Direct HTTP failure/recovery assertions are not
-  described as a browser error artifact. The bound does not cover arbitrary
-  attributes, in-flight spans, or total heap, and output sanitization does not
-  prevent collection.
-- Recorded that cooperative shutdown deadlines do not guarantee flush or drain.
-- Recorded the observed browser-module MIME failure and added a concise FLOW check
-  requiring content-type and awaited runtime-behavior assertions beyond HTTP 200.
-  MIME assertions and both fresh Chromium paths passed.
+- Added `startCapture({entry, cwd, env, execArgv})` for an absolute CommonJS `.cjs`
+  entry. A local preload initializes tracing before app execution; the app needs
+  no SpanTrail imports, diagnostics route, snapshot, or shutdown plumbing.
+- Captured HTTP and explicit OpenTelemetry application spans without fixture
+  route/name allowlists. Completed records retain IDs, parentage, durations,
+  kinds, and status, with generic names, null paths, and unknown source.
+- Added fail-closed malformed-record and 1,000-completed-span boundaries, parent
+  schema validation, fixed diagnostics, retained SDK flush, natural exit, and
+  bounded memoized child termination with observed exit results.
+- Added 12 tests covering independent temporary apps, success/failure/recovery,
+  async parentage, top-level work, concurrent snapshots, overflow, malformed
+  metadata, startup/shutdown failures, SIGTERM resistance, and exporter privacy
+  under hostile OTEL settings with a working loopback negative control.
+- Verified two real Chromium actions using controlled application-supplied
+  contexts, an unrelated browser request without context reuse, and inspection
+  of the newly captured temporary artifact in the actual unchanged viewer.
+- Included the capture gate in `npm test` without removing any legacy gate.
+- Documented the programmatic API, caller-managed readiness, privacy and lifecycle
+  limits. Recorded observed SDK-contract and delegated-test reconciliation lessons
+  in LEARNINGS and FLOW; GUARDRAILS and host/controller configuration are unchanged.
 
 ## Verification
 
-The orchestrator's latest full `npm test` passed: 65 existing tests plus four
-Express tests, both real Chromium proof generations, and both viewer E2E paths.
-`npm ls` confirmed pinned Express 5.2.1, and `git diff --check` passed. Generated
-artifacts were removed before a fresh verification by the fixer. Independent oracle
-review found no blockers; it found and prompted correction of the 2,000/1,000
-snapshot-bound mismatch, verified that the actual viewer parser accepts exactly
-1,000 and rejects 1,001, and prompted a GET-names regression test. These results
-are supported by successful push and PR CI for `3f0285f`. Existing CI warnings about
-deprecated action runtimes and the upcoming ubuntu-latest migration remain; no
-host/controller configuration was changed.
+The orchestrator independently ran full `npm test`: 65 existing tests, four
+Express tests, and 12 capture tests passed, followed by both fresh Chromium proof
+artifacts and both legacy viewer E2E paths. The capture browser test also uses its
+own fresh temporary artifact and actual viewer. Independent oracle review
+reproduced and prompted fixes for SDK lifecycle/privacy defects; its final review
+accepted the narrow runtime and independently passed all 12 capture tests.
+The final review's weak startup assertion was replaced with exact INTERNAL,
+CLIENT, and SERVER counts; its focused test passed. `git diff --check` passed.
+No known test regression or material review finding remains.
 
 Immediate next action:
-Inspect and merge PR #5 if its latest checks remain green, then prioritize a reusable integration
-that supports an actual user-owned CommonJS app without fixture-specific allowlists
-or app-imported snapshot/shutdown plumbing; alternatively choose another open v1.0
-Definition of Done gap based on evidence. Do not generalize the current Express
-fixture into a broad support claim.
+Inspect and merge PR #6 if its latest checks remain green. Next prioritize
+an end-user command/browser-context workflow or another open v1.0 gate. The session
+API is groundwork, not the complete `npx spantrail -- npm run dev` experience.
 
 Known blockers:
-None reported.
+None.
 
 Known scope limits:
 No generic click attribution, overlapping-action proof, cross-origin/redirect
-attribution, database tracing, or automatic function capture. The Express runtime
-is a fixture-specific CommonJS preload experiment with hardcoded route/name
-allowlists and a controlled source helper, not arbitrary app CLI/ESM/framework
-capture. The Express app explicitly imports snapshot/shutdown support. The 1,000
-limit applies only to completed spans and does not bound attributes, in-flight
-spans, or total heap; sanitizing snapshot output does not prevent collection.
-Viewer is a read-only snapshot, not live capture or a timeline; it loads no source
-content. Source attribution is limited to explicit calls in the compiled fixture;
-map authenticity, source content integrity, and symlink containment are not
-established. Cooperative shutdown deadlines do not guarantee flush or drain;
-cleanup is not guaranteed after parent SIGKILL, permanently hung custom
-launchers, or OS/process failure. No unconditional descendant containment or
-five-minute unfamiliar-user clean-install claim has been established.
+attribution, database tracing, or automatic function/source capture. CommonJS
+session capture is narrow and programmatic, not a public package, npm-command
+wrapper, ESM integration, arbitrary browser injector, or broad framework claim.
+Application spans still require explicit OpenTelemetry calls. Readiness is caller
+managed; application stdout/stderr are raw and must be consumed by the caller.
+The 1,000 limit bounds sanitized completed records, not raw SDK collection,
+in-flight spans, attributes, or total heap. Shutdown attempts SDK flush/shutdown
+but signal escalation does not guarantee draining; there is no descendant
+containment, sandboxing, or cleanup guarantee after parent SIGKILL/OS failure.
+The viewer is read-only and the session retains no artifact by default. General
+source-map authenticity/containment and the five-minute unfamiliar-user gate
+remain unestablished. The v1.0 mission is not complete.
