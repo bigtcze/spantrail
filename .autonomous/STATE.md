@@ -14,8 +14,11 @@ This cycle began clean on `feat/scoped-browser-capture` at `262e447`, synchroniz
 with main after PR #6 had already merged. Main CI `37220098988` passed; there were
 no open issues or pull requests. All implementation, tests, documentation, and
 mutable autonomous-file changes below belong to this engineering cycle, not
-pre-existing or user-owned work. Publication is pending the coherent commit and
-PR on this feature branch.
+pre-existing or user-owned work. Implementation commit `b35e4e9` was pushed and
+PR #7 opened: https://github.com/bigtcze/spantrail/pull/7. Push CI `37225588387`
+and PR CI `37225609117` both passed the fresh-install, Chromium, and full test
+gate. This publication record is a documentation-only follow-up. The independently
+reviewed PR remains open; the v1.0 mission is not complete.
 
 ## Changes in this cycle
 
@@ -59,8 +62,8 @@ counterexamples. `git diff --check` passed. No known test regression or blocking
 review finding remains within the documented narrow scope.
 
 Immediate next action:
-Publish this reviewed feature branch and inspect its fresh-install CI. Once the PR
-is green, merge it before unrelated work. Next prioritize a bounded end-user
+Inspect the latest checks on PR #7 and merge the independently reviewed work if
+all remain green, before unrelated work. Next prioritize a bounded end-user
 command workflow connecting CommonJS capture, browser-context capture, readiness,
 and artifact inspection, or another open v1.0 gate. This remains groundwork, not
 `npx spantrail -- npm run dev` or the five-minute unfamiliar-user gate.
