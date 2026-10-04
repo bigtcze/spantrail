@@ -9,63 +9,61 @@ single-command controlled demo are verified together. The v1.0 Definition of Don
 is not satisfied; this remains a controlled fixture, not application integration.
 
 Repository status:
-Cycle began on main at `321e4bc` with incomplete, uncommitted demo work. No open
-GitHub issues or pull requests; main CI run `37066371601` passed. Completed demo
-implementation `0f4b3eb` is published on `feat/controlled-demo` in open PR
-https://github.com/bigtcze/spantrail/pull/4. Its push and pull-request CI passed.
-This publication-record commit changes only this state file; check the latest
-head gate before merging.
+This cycle began clean on `feat/controlled-demo` at `ad157f9`. The original demo
+implementation PR #4 passed CI at its published head; a follow-up regression fix
+is now in the local tracked patch and remains pending publication, current-head CI,
+and merge. Do not treat it as merged. Original-head push run `37188453440` and
+PR run `37188455979` passed; they are not evidence for the follow-up patch.
+No open issues or other PRs were found. No known blockers.
 
 ## Changes in this cycle
 
-- Finished `npm run demo`: build the TypeScript fixture, generate a fresh headless
-  browser proof, and serve its read-only viewer on an ephemeral loopback URL.
-  Prints command-to-viewer startup time, excluding installation and manual opening.
-- Added signal-aware cleanup for build, proof, and viewer stages. Build shutdown
-  escalates to SIGKILL and reaps the owned child; viewer shutdown closes stalled
-  incomplete-header connections. Browser acquisition uses direct Chromium launch,
-  retains ownership for late results, and closes each acquired browser once.
-- Preserved operation failures, arbitrary/falsy rejection values, cleanup errors,
-  and first-observed demo exit intent through later/repeated signals.
-- Independent review exposed acquisition/cleanup boundary defects. An attempted
-  supervised process-group rewrite introduced regressions and was removed; the
-  final implementation provides tested cooperative cleanup, not hard containment.
-- Updated quickstart and viewer documentation with timing, installation, snapshot,
-  privacy, and cleanup limits. FLOW/LEARNINGS now require concrete dependency
-  lifecycle experiments and failing boundary assertions before lifecycle rewrites.
-- No dependencies added. Guardrails, controller, runner, host authentication,
-  configuration, and security controls are unchanged.
+- Recorded a cold Linux amd64 Debian 12 / Node 24 setup observation from a pinned
+  `node:24-bookworm` image (`node@sha256:64af3819f9275802414d7cdc38c27e9d82bd564dec4d4da87d008255d36c63b4`), with a fresh source archive plus tracked patch and no host dependency/browser caches.
+- The full gate passed cold: 65 tests, fresh proof generation, and integrated viewer
+  Chromium E2E. A separate awaited production viewer inspection verified two
+  actions, the `/api/action` -> service -> after-await source chain and exact
+  `service.cts:25:20` attribution; switching to action 2 showed unknown source.
+- Sequential setup measured `npm ci` at 1.589s, `npx playwright install
+  --with-deps chromium` at 23.561s, and demo launch through awaited browser
+  inspection at 2.288s. Start-to-inspection total was 27.531s, including browser
+  close. This scoped machine observation excludes image/source provisioning,
+  preinstalled Node/npm, and a human manually opening the URL; setup downloads
+  depend on network. It is not a benchmark or evidence for the five-minute human
+  unfamiliar-developer v1 gate. A plain-install missing `libnspr4.so` probe was
+  resolved by the documented `--with-deps` installation fallback.
+- The follow-up cleanup-first regression previously failed with intent 130 rather
+  than 1; it now passes. Cleanup exceptions notify `onFailure` immediately while
+  preserving `AggregateError` and signal/operation-first exit-intent order.
+  Independent review of the original PR found no blockers (36 focused / 64 all);
+  follow-up review found no blockers (31 focused), with added falsy-rejection and
+  observer assertions.
+- README and viewer guide clarify that users open the printed URL manually.
+  FLOW/LEARNINGS now require timestamped sequential measurement harnesses, awaited
+   decisive assertions, saved raw logs/machine timings, and environment snapshots.
+   Guardrails, host configuration, authentication, and controller remain unchanged.
 
 ## Verification
 
-Node.js 24.21.0, npm 11.19.0, TypeScript 6.0.3, Playwright 1.63.0 on Linux.
+Cold image: Debian 12 bookworm, Node `v24.21.0`, npm `11.19.0`, Playwright
+Chromium `153.0.8010.12`; pinned image digest above.
 
-- Independent QA removed only the ignored proof artifact and ran `npm test`:
-  64 unit/lifecycle/privacy/source/model/server/demo tests passed, followed by
-  fresh Chromium tracing proof generation and real-artifact viewer Chromium E2E.
-- Final independent review found no material issue within the cooperative-cleanup
-  contract and independently ran 31 focused lifecycle/demo/shutdown tests.
-- Added regressions cover acquisition after settlement timeout, exactly-once
-  disposal, falsy/non-Error/frozen rejection values, child reaping/listener recovery,
-  operation failure followed by cleanup signals, and first signal exit intent.
-- Real-browser interruption tests check Chromium, renderer, and fixture PID
-  disappearance and released fixture port while the test runner remains alive.
-- Manual production-demo Chromium QA inspected two actions and actual linked HTTP,
-  service, and after-await source evidence; switching actions reset span selection.
-  One observed startup was 1.15 seconds. This is not a clean-install benchmark.
-- Follow-up shutdown QA resolved an ambiguous earlier probe: direct CLI and
-  npm-launched demo served HTTP 200, exited 130/143 after SIGINT/SIGTERM, stopped
-  responding, and allowed rebinding their exact ports. For npm runs, signals went
-  to the owned Node demo child, not an assumed signal-forwarding npm wrapper.
-- `git diff --check`: passed. Implementation `0f4b3eb` passed GitHub push CI
-  run `37188360104` and pull-request CI run `37188373848`, including fresh
-  lockfile installation, browser setup, and the full integrated `npm test` gate.
+- `npm test` cold: all 65 tests passed, fresh Chromium tracing proof generated,
+  and integrated real-artifact viewer Chromium E2E passed.
+- Awaited production viewer probe validated two actions and exact nested
+  HTTP/service/after-await evidence/source plus action switching and unknown
+  attribution. Child SIGINT cleanup stopped HTTP and released the exact port.
+- Final cold demo-child SIGINT exited 130 and released the port; prior QA separately
+  verified SIGTERM exit 143 and port release.
+- Raw QA logs and probe outputs are retained in `/tmp/opencode` on this machine;
+  those ephemeral paths are evidence for this run, not portable repository assets
+  or a reproducibility guarantee.
 
 Immediate next action:
-Resolve this demo PR/CI first. Then measure documented installation and time to a
-useful viewer result on a supported clean environment before broadening support.
-Prioritize the v1.0 Definition of Done gaps over optional features. Preserve fresh
-artifact, exact-location, fail-closed, failure/recovery, and privacy gates.
+Publish the PR #4 follow-up, wait for CI on its exact head, and merge only after it
+passes. Then prioritize validating a reusable conventional Node backend
+application integration to close the Definition of Done gap; do not claim framework
+support before validation.
 
 Known blockers:
 None.
@@ -80,5 +78,5 @@ Depth-64 usability is not browser-proven. Source attribution is only for explici
 calls in the compiled fixture; map authenticity, source content integrity, and
 symlink containment are not established. Cooperative shutdown does not guarantee
 cleanup after parent SIGKILL, permanently hung custom launchers, or OS/process
-failure. No unconditional descendant containment or five-minute clean-install
-claim has been established.
+failure. No unconditional descendant containment or five-minute unfamiliar-user
+clean-install claim has been established.

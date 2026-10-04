@@ -122,3 +122,9 @@ credentials, licensing, hardware or permissions outside the approved
 environment.
 
 When recurring manual environment setup is discovered, automate it.
+
+For setup or onboarding measurements, use a timestamped sequential harness with
+explicit start/end boundaries and awaited assertions for the decisive user-visible
+result. Preserve raw logs, machine-readable timings, and the tested environment and
+source snapshot. Report setup, launch, and manual interaction boundaries separately;
+reject narrative estimates or unawaited DOM samples as measurement evidence.

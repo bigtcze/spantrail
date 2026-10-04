@@ -121,6 +121,31 @@ catch (error) { assert.ok(error instanceof AggregateError); assert.ok(error.erro
 assert.equal(viewerCalls, 0); assert.equal(operation.code, undefined);`);
 });
 
+test('first browser cleanup failure latches exit intent before a later signal', async () => {
+  await scenario(`${importRun}
+import { spawn as nodeSpawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { EventEmitter } from 'node:events';
+const runnerURL = pathToFileURL(process.env.SPANTRAIL_DEMO_TEST_RUNNER_PATH);
+const { runProof } = await import(new URL('../correlation/run.js', runnerURL));
+const lifecycleURL = new URL('../correlation/lifecycle-fixture.js', runnerURL);
+const cleanup = Object.freeze(new Error('browser cleanup'));
+let viewerCalls = 0;
+const intent = { code: undefined };
+const build = new EventEmitter(); build.exitCode = null; build.signalCode = null;
+queueMicrotask(() => { build.exitCode = 0; build.emit('exit', 0, null); });
+try {
+  await runDemo({ intent, launch: () => build, proof: options => runProof({ ...options, childProgram: fileURLToPath(lifecycleURL), spawn: (exe, args, opts) => nodeSpawn(exe, [...args, 'ready'], opts), output: false, skipProofOperations: true, launchBrowser: async () => ({ newPage: async () => ({}), close: async () => { setImmediate(() => process.emit('SIGINT')); throw cleanup; } }) }), viewer: async () => { viewerCalls++; } });
+  process.exitCode = 4;
+} catch (error) {
+  assert.ok(error instanceof AggregateError);
+  assert.ok(error.errors.includes(cleanup));
+  assert.equal(intent.code, 1);
+}
+assert.equal(viewerCalls, 0);
+`);
+});
+
 test('signal-first proof failure preserves signal intent and final rejection', async () => {
   await scenario(`${importRun}\n${fakeBuild}\nqueueMicrotask(() => { build.exitCode = 0; build.emit('exit', 0, null); }); const intent = { code: undefined }; const later = new Error('late proof failure'); try { await runDemo({ intent, launch: () => build, proof: options => { process.emit('SIGTERM'); options.onFailure(later); throw later; }, viewer: async () => { console.log('BAD_VIEWER'); } }); process.exitCode = 4; } catch (error) { assert.equal(error, later); assert.equal(intent.code, 143); }`);
 });

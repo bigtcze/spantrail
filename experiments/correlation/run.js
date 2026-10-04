@@ -165,9 +165,13 @@ export async function runProof(options = {}) {
   finally {
     cleanupStarted = true;
     const cleanupErrors = [];
-    if (launch && !browser) { try { browser = await bounded(launch, browserTimeout + 100, 'Browser launch settlement'); } catch (error) { if (error instanceof BoundedTimeoutError) cleanupErrors.push(error); } }
-    if (browser) { try { await closeOwned(browser); } catch (error) { cleanupErrors.push(error); } }
-    try { await stopChild(childState, childStopOptions); } catch (error) { cleanupErrors.push(error); }
+    const recordCleanupFailure = error => {
+      cleanupErrors.push(error);
+      try { onFailure?.(error); } catch {}
+    };
+    if (launch && !browser) { try { browser = await bounded(launch, browserTimeout + 100, 'Browser launch settlement'); } catch (error) { if (error instanceof BoundedTimeoutError) recordCleanupFailure(error); } }
+    if (browser) { try { await closeOwned(browser); } catch (error) { recordCleanupFailure(error); } }
+    try { await stopChild(childState, childStopOptions); } catch (error) { recordCleanupFailure(error); }
     process.removeListener('SIGINT', onInt); process.removeListener('SIGTERM', onTerm); process.removeListener('SIGHUP', onHup);
     if (cleanupErrors.length) { const primary = operationFailed ? primaryError : interrupted; throw new AggregateError([...(operationFailed || interrupted ? [primary] : []), ...cleanupErrors], 'Operation failed; cleanup failed', { cause: primary }); }
     if (interrupted && !operationFailed) throw interrupted;
