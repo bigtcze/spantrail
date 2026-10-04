@@ -5,6 +5,33 @@ Record process improvements, disproved assumptions and durable lessons here.
 Do not turn this into a raw activity log. Only record information that should
 change future behaviour.
 
+## 2026-10-04 — Preserve browser wrapper semantics and bound QA lanes
+
+- A real Chromium probe showed resolved-promise continuations can run during active
+  trusted click dispatch. The capture contract now names that observed boundary,
+  rather than claiming synchronous-only causality or using a latest-click timer.
+  Playwright routing header overrides persist across redirects; the narrow fetch
+  hook instead rejects selected redirects and uses factory-owned contexts with
+  service workers blocked. Both redirect destinations are tested for zero delivery.
+- Green browser tests still missed ordinary application regressions: inspecting a
+  Request consumed its body before bypass; inspecting single-use headers exhausted
+  them; spreading RequestInit discarded inherited/non-enumerable method and body
+  properties. Independent review reproduced each defect. Eligibility now precedes
+  Request construction, headers normalize once, and a headers-only proxy preserves
+  dictionary reads and original getter receivers. Executed server observations cover
+  both injected and bypass requests. FLOW now requires these wrapper controls.
+- Several broad QA passes returned incomplete or contradictory scenarios. Splitting
+  the lane into three dispatch tests and four boundary tests produced runnable
+  evidence; follow-ups added concrete review counterexamples. Repeatedly reissuing
+  a broad list wasted time. Future passes should own a few explicit scenarios and
+  complete their focused run before acceptance. Documentation's double post-click
+  response wait was also caught by review; the example now subscribes once before
+  the click and separately awaits application completion.
+- Final independent review passed all nine focused browser tests and reproduced
+  the repaired dictionary/body/iterator cases. The final complete gate passed 89
+  tests plus fresh legacy proofs and both viewer browser gates. These establish
+  only sequential, top-frame Chromium fetch capture to one exact loopback endpoint.
+
 ## 2026-10-04 — Reconcile capture contracts and delegated test scope
 
 - OpenTelemetry's exporter contract is mixed: `export` uses a callback, while

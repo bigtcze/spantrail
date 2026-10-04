@@ -63,17 +63,27 @@ has fixture-hardcoded route/name allowlists, the app explicitly imports snapshot
 and shutdown support, and it does not support arbitrary CLI apps, ESM, or route,
 layer, and function capture.
 
-A separate reusable local CommonJS session now removes fixture-specific route/name
+A separate reusable local CommonJS session removes fixture-specific route/name
 allowlists and app-imported snapshot/shutdown plumbing for temporary app processes.
 It accepts an absolute `.cjs` entry and leaves readiness to the caller. It captures
 HTTP and explicit OpenTelemetry application spans, redacting names/paths and
-reporting unknown source. Real Chromium actions use application-supplied contexts;
-the resulting fresh artifact is inspected in the unchanged viewer. This is a narrow
-programmatic proof, not a published package/CLI, automatic browser injector, or
-broad framework-support claim. See
-[the session proof](../docs/correlation-proof.md#local-commonjs-session-proof).
-The next step is an end-user command/browser-context workflow or another v1.0 gap,
-not broadening support claims.
+reporting unknown source.
+
+A narrow programmatic Chromium browser-context capture now creates the context with
+service workers blocked and installs before pages are created. Trusted top-frame
+click dispatch (including Chromium-resolved-promise microtasks) can publish generated
+action IDs and propagate them only to an exact configured fetch endpoint. Timers,
+pending-await continuations, synthetic/frame/background requests bypass it. It is
+fetch-only, imposes `redirect: 'error'`, preserves pre-existing trace headers by
+bypassing injection, and has a fail-closed 100-action ID-only collector. This is not
+a CLI, app instrumentation, or authenticity boundary against a malicious page.
+Callers must await requests/actions and join IDs to actual backend spans before
+parsing artifacts; unmatched actions are rejected. Application spans still require
+explicit OpenTelemetry instrumentation. The successful checkout proof uses the
+existing viewer; it does not prove error artifacts or broader support. Installation,
+flush, and disposal are sequential, and failed cleanup requires closing the context.
+See the [browser-context proof](../docs/correlation-proof.md#programmatic-browser-context-capture)
+and [session proof](../docs/correlation-proof.md#local-commonjs-session-proof).
 
 A cold machine setup observation is documented in the [local viewer guide](../docs/local-viewer.md),
 but it is not a benchmark and does not establish the five-minute
