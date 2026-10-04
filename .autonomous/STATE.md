@@ -13,8 +13,11 @@ This cycle began on clean, synchronized `feat/express-integration` at `3bfc982`,
 with PR #5 green and no open issues. The reviewed PR was merged as `114c0a3`;
 main CI `37202510719` passed. This cycle created `feat/commonjs-local-capture`.
 All capture, test, package-script, and documentation changes are engineering-cycle
-work, not pre-existing or user-owned modifications. Local verification and
-independent review are complete; publication is the remaining cycle step.
+work, not pre-existing or user-owned modifications. Implementation commit `e4df8ba`
+was pushed and PR #6 opened: https://github.com/bigtcze/spantrail/pull/6.
+Push CI `37205129569` and PR CI `37205150150` both passed the fresh-install,
+Chromium, and complete test gate. This publication record is a documentation-only
+follow-up. The independently reviewed PR remains open; the v1.0 mission is not complete.
 
 ## Changes in this cycle
 
@@ -52,7 +55,7 @@ CLIENT, and SERVER counts; its focused test passed. `git diff --check` passed.
 No known test regression or material review finding remains.
 
 Immediate next action:
-Publish and check this branch's PR, then merge if checks remain green. Next prioritize
+Inspect and merge PR #6 if its latest checks remain green. Next prioritize
 an end-user command/browser-context workflow or another open v1.0 gate. The session
 API is groundwork, not the complete `npx spantrail -- npm run dev` experience.
 
