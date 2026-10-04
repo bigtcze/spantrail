@@ -15,8 +15,12 @@ latest push and PR checks were green (`37225732643`, `37225736469`); its prior
 independent review was recorded in STATE. Merged PR #7 as `03c13c5`, then created
 `feat/capture-command` from synchronized main. Main CI `37239605572` passed.
 There were no open issues, unrelated open PRs, or releases. All new implementation,
-tests, and documentation below are this cycle's work. Publication and remote CI
-will be recorded after pushing the coherent implementation commit.
+tests, and documentation below are this cycle's work. Implementation commit
+`aeff9d8` was pushed and PR #8 opened:
+https://github.com/bigtcze/spantrail/pull/8. Push CI `37241812813` and PR CI
+`37241815694` both passed the fresh-install, Chromium, and complete test gate.
+This publication record is a documentation-only follow-up. The independently
+reviewed PR remains open; the v1.0 mission is not complete.
 
 ## Changes in this cycle
 
