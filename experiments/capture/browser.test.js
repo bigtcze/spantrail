@@ -7,8 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
 import { startCapture } from './session.js';
+import { createBrowserCaptureContext, installBrowserCapture } from './browser-context.js';
 import { parseArtifact, buildTrails } from '../viewer/model.js';
-import { createTraceContext } from '../correlation/context.js';
 import { startViewer } from '../viewer/server.js';
 import { fileURLToPath as toPath } from 'node:url';
 import { writeFile as writeArtifact } from 'node:fs/promises';
@@ -24,15 +24,16 @@ function within(promise, label, ms = 12000) {
   return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${label} timed out`)), ms); })]).finally(() => clearTimeout(timer));
 }
 
-test('serialized Chromium actions observe application-supplied W3C context only on intended same-origin requests', async t => {
+test('scoped generated trusted-dispatch context correlates real Chromium actions through the backend and viewer', async t => {
   const cwd = await mkdtemp(resolve(tmpdir(), 'spantrail-capture-browser-'));
   const entry = resolve(cwd, 'app.cjs');
   const portFile = resolve(cwd, 'port.txt');
-  const page = `<!doctype html><button id="checkout">Checkout</button><output id="status">idle</output><script>const button=document.querySelector('#checkout'),status=document.querySelector('#status');button.addEventListener('click',async()=>{const action=window.captureActions.shift(),traceId=action.traceId,spanId=action.spanId;const response=await fetch('/checkout-unique',{headers:{traceparent:'00-'+traceId+'-'+spanId+'-01'}});status.textContent=response.ok?'checkout complete':'checkout failed';});</script>`;
+  const page = `<!doctype html><button id="checkout">Checkout</button><output id="status">idle</output><script>const button=document.querySelector('#checkout'),status=document.querySelector('#status');window.backendHeaders=[];button.addEventListener('click',async()=>{const response=await fetch('/checkout-unique');window.backendHeaders.push((await response.json()).traceparent);status.textContent=response.ok?'checkout complete':'checkout failed';});</script>`;
   await writeFile(resolve(cwd, 'page.html'), page);
-  await writeFile(entry, `const {createRequire}=require('node:module');const express=createRequire(${JSON.stringify(resolve(root, 'package.json'))})(${JSON.stringify(expressPath)});const app=express();app.get('/',(_q,r)=>r.sendFile(${JSON.stringify(resolve(cwd, 'page.html'))}));const {trace}=createRequire(${JSON.stringify(resolve(root, 'package.json'))})(${JSON.stringify(apiPath)});const tracer=trace.getTracer('browser-fixture');app.get('/checkout-unique',async(_q,r)=>{await tracer.startActiveSpan('app-async-work',async span=>{await new Promise(resolve=>setTimeout(resolve,5));span.end()});r.json({ok:true})});app.get('/unrelated-unique',(_q,r)=>r.json({ok:true,traceId:trace.getActiveSpan().spanContext().traceId}));app.listen(0,'127.0.0.1',function(){require('node:fs').writeFileSync(${JSON.stringify(portFile)},String(this.address().port));console.log('APP_READY')});`);
+  await writeFile(entry, `const {createRequire}=require('node:module');const express=createRequire(${JSON.stringify(resolve(root, 'package.json'))})(${JSON.stringify(expressPath)});const app=express();app.get('/',(_q,r)=>r.sendFile(${JSON.stringify(resolve(cwd, 'page.html'))}));const {trace}=createRequire(${JSON.stringify(resolve(root, 'package.json'))})(${JSON.stringify(apiPath)});const tracer=trace.getTracer('browser-fixture');app.get('/checkout-unique',async(q,r)=>{await tracer.startActiveSpan('app-async-work',async span=>{await new Promise(resolve=>setTimeout(resolve,5));span.end()});r.json({ok:true,traceparent:q.headers.traceparent})});app.get('/unrelated-unique',(_q,r)=>r.json({ok:true,traceId:trace.getActiveSpan().spanContext().traceId}));app.listen(0,'127.0.0.1',function(){require('node:fs').writeFileSync(${JSON.stringify(portFile)},String(this.address().port));console.log('APP_READY')});`);
   let capture;
   let browser;
+  let browserCapture;
   const outbound = [];
   const unrelatedRequests = [];
   try {
@@ -48,37 +49,30 @@ test('serialized Chromium actions observe application-supplied W3C context only 
     const port = Number(await within(readFile(portFile, 'utf8'), 'server port file'));
     const origin = `http://127.0.0.1:${port}`;
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext();
-    await context.addInitScript(({ origin }) => {
-      const nativeFetch = window.fetch.bind(window);
-      window.fetch = (input, init = {}) => {
-        const url = new URL(input instanceof Request ? input.url : input, location.href);
-        if (url.origin === origin && url.pathname === '/checkout-unique' && !url.search) {
-          const traceparent = init.headers instanceof Headers ? init.headers.get('traceparent') : init.headers?.traceparent;
-          if (traceparent) { const values = JSON.parse(sessionStorage.getItem('captureTraceparents') || '[]'); values.push(traceparent); sessionStorage.setItem('captureTraceparents', JSON.stringify(values)); }
-        }
-        return nativeFetch(input, init);
-      };
-    }, { origin });
+    const context = await createBrowserCaptureContext(browser);
+    browserCapture = await installBrowserCapture(context, { origin, endpoint: `${origin}/checkout-unique` });
     const tab = await context.newPage();
     tab.on('request', request => { if (new URL(request.url()).pathname === '/unrelated-unique') unrelatedRequests.push(request.headers()); });
     await tab.goto(origin);
-    const contexts = [createTraceContext(), createTraceContext()];
-    await tab.evaluate(contexts => { window.captureActions = contexts; }, contexts);
     for (let index = 0; index < 2; index++) {
       await tab.locator('#checkout').click();
       await tab.waitForFunction(() => document.querySelector('#status').textContent === 'checkout complete', null, { timeout: 8000 });
       await tab.locator('#status').evaluate(element => { element.textContent = 'idle'; });
     }
-    const injected = await tab.evaluate(() => JSON.parse(sessionStorage.getItem('captureTraceparents') || '[]'));
-    assert.equal(injected.length, 2, 'only the two intended same-origin action requests carry context');
-    const actionIds = injected.map(header => { const parts = header.split('-'); return { traceId: parts[1], spanId: parts[2] }; });
-    assert.deepEqual(actionIds, contexts);
+    const actionIds = await browserCapture.actions();
+    assert.equal(actionIds.length, 2, 'only the two intended trusted click events are recorded');
+    const backendHeaders = await tab.evaluate(() => window.backendHeaders);
+    const serverActionIds = backendHeaders.map(header => { const parts = header.split('-'); return { traceId: parts[1], spanId: parts[2] }; });
+    assert.equal(serverActionIds.length, 2);
+    assert.deepEqual(serverActionIds, actionIds);
     assert.equal(new Set(actionIds.map(action => action.traceId)).size, 2);
     const unrelatedResponse = await tab.evaluate(async () => { const response = await fetch('/unrelated-unique'); return { status: response.status, ...(await response.json()) }; });
     assert.equal(unrelatedResponse.status, 200);
     assert.equal(unrelatedRequests.length, 1);
     assert.equal(unrelatedRequests[0]['traceparent'], undefined, 'unrelated browser request has no traceparent');
+    const checkoutRequests = await tab.evaluate(() => performance.getEntriesByType('resource').filter(entry => new URL(entry.name).pathname === '/checkout-unique').length);
+    assert.equal(checkoutRequests, 2, 'both intended requests were made by actual click handlers');
+    assert.ok(actionIds.every(action => /^[0-9a-f]{32}$/.test(action.traceId) && /^[0-9a-f]{16}$/.test(action.spanId)));
     const deadline = Date.now() + 8000;
     let spans;
     do {
@@ -123,6 +117,7 @@ test('serialized Chromium actions observe application-supplied W3C context only 
       assert.match(await viewerPage.getByTestId('span-details').innerText(), /Unknown source/);
     } finally { await viewer.close(); }
   } finally {
+    if (typeof browserCapture !== 'undefined') await browserCapture.dispose();
     if (browser) await browser.close();
     if (capture) await within(capture.stop(), 'capture cleanup');
     assert.deepEqual(outbound, [], 'no HTTP(S) exporter traffic, including during SDK shutdown');

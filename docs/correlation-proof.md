@@ -150,8 +150,9 @@ npm wrapper, or arbitrary browser injector. It forks the app with the local
 CommonJS preload. Application readiness is caller-managed: the helper does not
 infer that the server is listening. Child stdout/stderr remain raw application
 output and are not redacted by the capture schema. Applications may use the
-OpenTelemetry API explicitly to create application spans; browser tests must
-supply their own trace contexts. The viewer's temporary artifact is used for the
+OpenTelemetry API explicitly to create application spans. The scoped browser
+context helper below supplies context for eligible fetches without app-side
+trace-context code. The viewer's temporary artifact is used for the
 actual browser gate; no capture artifact is retained by default.
 
 Completed records are sanitized: generic span names, null paths, and unknown
@@ -172,6 +173,47 @@ server semantics, and its process behavior; this proof adds no source attributio
 
 `npm run test:capture` exercises the entry point and lifecycle/schema boundaries.
 The section documents this narrow integration, not broad framework support.
+
+## Programmatic browser-context capture
+
+`experiments/capture/browser-context.js` adds a narrow Playwright Chromium API. It is programmatic only; no SpanTrail CLI or command wrapper is implemented. Create the context with `createBrowserCaptureContext(browser)`, install capture before creating pages, and use the exact loopback origin and absolute endpoint URL:
+
+```js
+import { chromium } from 'playwright';
+import { createBrowserCaptureContext, installBrowserCapture } from './experiments/capture/browser-context.js';
+
+const browser = await chromium.launch();
+const context = await createBrowserCaptureContext(browser);
+const capture = await installBrowserCapture(context, {
+  origin: 'http://127.0.0.1:4318',
+  endpoint: 'http://127.0.0.1:4318/api/checkout'
+});
+const page = await context.newPage();
+try {
+  await page.goto('http://127.0.0.1:4318');
+  const responseReady = page.waitForResponse('http://127.0.0.1:4318/api/checkout');
+  await page.getByRole('button', { name: 'Checkout' }).click();
+  const response = await responseReady;
+  await response.finished();
+  // Await the application's own completion signal before taking the snapshot.
+  await page.getByText('checkout complete', { exact: true }).waitFor();
+  const actions = await capture.actions();
+  const spans = await session.snapshot();
+  const matchingActions = actions.filter(action => spans.some(span => span.traceId === action.traceId));
+  const artifact = parseArtifact({ actions: matchingActions, spans });
+} finally {
+  try { await capture.dispose(); } catch { await context.close(); }
+  await browser.close();
+}
+```
+
+Here `session` is an independently started local capture session and `parseArtifact` is imported from `experiments/viewer/model.js`; startup/readiness is caller-managed. Await the actual request and action completion before navigating or closing the page. Install, flush via `actions()`, and dispose sequentially; concurrent lifecycle use is not guaranteed. The installer forces service workers to `block`; it does not change routing or cache behavior beyond the fetch hook.
+
+Only a trusted top-frame click's active dispatch can generate IDs and propagate them to the configured exact endpoint. Chromium-resolved-promise microtasks in that dispatch are covered; timers, pending-await continuations, synthetic clicks, frame requests, and background requests bypass capture. Only string, URL, or Request fetch inputs are considered; this is fetch-only, not XHR or navigation. Requests to the endpoint must match its exact `href`, with no query or fragment; credentials are rejected. An original Request containing `traceparent` or `tracestate`, or either header supplied in `init`, bypasses capture even if later overridden. Selected requests use `redirect: 'error'`, blocking same- and cross-origin redirects and potentially changing application behavior.
+
+The browser binding publishes generated IDs only, not completed spans, and is callable from the page realm; it is not an authenticity boundary against a malicious application. The fail-closed collector allows at most 100 actions; observed publication failures are latched. Join returned actions only to IDs having real backend spans before calling `parseArtifact`: actions without matching spans (for example, aborted requests before reaching the backend) are rejected by the parser. Unrelated spans may remain in the snapshot but do not appear in action trails; captured spans retain explicit unknown source. No span completion is fabricated. The integrated proof verifies successful checkout actions in the unchanged viewer, not error artifacts. The disposer disables capture in existing pages, removes the new-page init script, and awaits cleanup. If cleanup fails, close the context; no concurrent cleanup guarantee is made.
+
+`npm run test:capture` includes the integrated browser-context tests via test auto-discovery. They exercise trusted dispatch/microtasks and bypass cases, exact endpoint matching, header preservation, lifecycle and a successful checkout through the existing viewer. The programmatic API does not generate application spans: explicit OpenTelemetry instrumentation is still required for application spans. It reuses the local capture session and unchanged viewer, and adds no UI or broader product/framework support claim.
 
 ## Implementation boundary
 

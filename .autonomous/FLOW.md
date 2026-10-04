@@ -138,3 +138,12 @@ reject narrative estimates or unawaited DOM samples as measurement evidence.
 When a framework serves browser modules, assert their content types and await the
 actual browser module execution / resulting behavior; HTTP 200 asset checks alone
 do not establish that the browser can load them.
+
+For browser API wrappers, verify native semantics before claiming transparent
+bypass: include consumed Request bodies, single-use header iterators, inherited
+and non-enumerable RequestInit fields, and getters with their original receiver.
+Probe event ordering in the installed browser rather than assuming an async
+boundary ends dispatch. Subscribe to response events before triggering actions;
+await application completion separately. If a delegated test lane repeatedly
+returns incomplete or contradictory assertions, stop reissuing its broad scope;
+split it into a few runnable scenarios and require a passing run before accepting it.

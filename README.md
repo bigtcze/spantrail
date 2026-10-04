@@ -35,9 +35,9 @@ This existing-artifact viewer defaults to `http://127.0.0.1:4318`; `PORT` select
 
 The viewer loads no source content and uses no external assets or services. See the [browser correlation proof](docs/correlation-proof.md), [source-attribution proof](docs/source-attribution-proof.md), and [local viewer guide](docs/local-viewer.md) for architecture, validation, privacy, and browser acceptance coverage.
 
-## Local CommonJS capture session
+## Programmatic browser-context capture
 
-The focused capture lifecycle gate is `npm run test:capture`. Its reusable entry point and precise privacy, shutdown, and support boundaries are documented in the [CommonJS session proof](docs/correlation-proof.md#local-commonjs-session-proof).
+`npm run test:capture` includes a narrow Playwright Chromium browser-context proof: trusted top-frame click dispatch can associate generated action IDs with exact-endpoint fetches, then real backend spans can be viewed in the existing artifact viewer. It is an experimental local API, not a CLI or automatic app instrumentation; see the [browser-context proof and usage limits](docs/correlation-proof.md#programmatic-browser-context-capture). Application spans still require explicit OpenTelemetry instrumentation. The [CommonJS capture session](docs/correlation-proof.md#local-commonjs-session-proof) provides the local backend capture API.
 
 ## Current scope
 
