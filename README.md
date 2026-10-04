@@ -1,6 +1,6 @@
 # SpanTrail
 
-SpanTrail is currently a controlled tracing prototype with a local artifact viewer, not a generally supported tracing product. A Chromium browser trail is integrated with an executed compiled TypeScript fixture that reports source locations only at explicit instrumentation calls. Everything runs locally.
+SpanTrail is currently a controlled tracing prototype with a local artifact viewer, not a generally supported tracing product. A Chromium browser trail is integrated with an executed compiled TypeScript fixture that reports source locations only at explicit instrumentation calls. A separate Express 5.2.1 CommonJS fixture validates preload-based request tracing and local artifact viewing; it is not general application capture or a framework-support claim. Everything runs locally.
 
 ## Quick start: controlled demo
 
@@ -23,7 +23,7 @@ This is a controlled fixture demonstration, not interactive live tracing: the vi
 
 ## Focused proof and viewer workflows
 
-`npm test` builds the fixture, runs unit/lifecycle/source-attribution/viewer tests, generates a fresh real Chromium browser proof, then verifies the viewer in Chromium against that artifact. The source-attribution proof sends actual requests through the traced server and executes compiled fixture code; failure-path source-map cases use disposable copies. To generate only the proof artifact, run `npm run proof`; it writes `experiments/correlation/artifacts/proof.json`.
+`npm test` builds the fixtures, runs unit/lifecycle/source-attribution and Express tests, generates both real Chromium proof artifacts, and runs the viewer E2E against both artifacts. The source-attribution proof sends actual requests through the traced server and executes compiled fixture code; failure-path source-map cases use disposable copies. To generate only the correlation proof artifact, run `npm run proof`; it writes `experiments/correlation/artifacts/proof.json`. For the focused Express reproduction commands and limits, see the [browser correlation proof](docs/correlation-proof.md#express-521-commonjs-integration-proof).
 
 To view an already-generated artifact without rerunning the proof, run:
 
@@ -39,4 +39,4 @@ The viewer loads no source content and uses no external assets or services. See 
 
 The browser evidence covers serialized, same-origin fixture actions and explicitly instrumented asynchronous service work. The separate TypeScript source-attribution fixture verifies locations for explicit `withSourceSpan` calls; it does not establish generic TypeScript or framework support or automatic function capture. The viewer consumes only this controlled proof's artifact shape. Overlapping-action attribution and database tracing are not proven.
 
-The project is MIT-licensed. The pinned TypeScript compiler declares Apache-2.0, `@types/node` and `@jridgewell/trace-mapping` declare MIT, and current OpenTelemetry and Playwright dependencies declare Apache-2.0 licenses; consult package metadata for details.
+The project is MIT-licensed. The pinned Express dependency declares MIT; TypeScript, OpenTelemetry, and Playwright dependencies declare Apache-2.0, while `@types/node` and `@jridgewell/trace-mapping` declare MIT. Consult package metadata for details.

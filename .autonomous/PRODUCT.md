@@ -51,13 +51,22 @@ read-only snapshot, not a live capture UI or timeline; correlation action roots
 have IDs only, not synthetic observed spans. See
 [`docs/local-viewer.md`](../docs/local-viewer.md).
 
-The next product step is validating a reusable conventional Node backend
-application integration to close a v1.0 Definition of Done gap. The controlled-demo
-PR and its cleanup-order follow-up are merged with green main CI. Do not claim
-framework support before validation. A cold machine setup observation is documented in the
-[local viewer guide](../docs/local-viewer.md), but it is not a benchmark and does not
-establish the five-minute unfamiliar-developer gate. AppMap and Jaeger are useful
-reference points; these proofs establish no comparative advantage.
+A focused Express 5.2.1 (MIT) / Node 24.21.0 conventional-backend fixture now
+validates CommonJS preload-based HTTP tracing, two real serialized browser actions
+through Express, the controlled mapped TypeScript spans, independent explicit app
+spans with unknown source, generic promise rejection and recovery, privacy under
+hostile OTEL settings, fail-closed completed-span overflow, and the viewer against
+both artifacts. See the reproduction commands and precise limits in
+[`docs/correlation-proof.md`](../docs/correlation-proof.md). This closes a narrow
+integration validation step, not the v1.0 conventional-framework gate: the runtime
+has fixture-hardcoded route/name allowlists, the app explicitly imports snapshot
+and shutdown support, and it does not support arbitrary CLI apps, ESM, or route,
+layer, and function capture. The next product step is a genuinely reusable
+application integration (or another v1.0 gap), not broadening the support claim.
+A cold machine setup observation is documented in the [local viewer guide](../docs/local-viewer.md),
+but it is not a benchmark and does not establish the five-minute
+unfamiliar-developer gate. AppMap and Jaeger are useful reference points; these
+proofs establish no comparative advantage.
 
 This file is intentionally mutable.
 Update it when evidence changes the product strategy.

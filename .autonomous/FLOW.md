@@ -128,3 +128,6 @@ explicit start/end boundaries and awaited assertions for the decisive user-visib
 result. Preserve raw logs, machine-readable timings, and the tested environment and
 source snapshot. Report setup, launch, and manual interaction boundaries separately;
 reject narrative estimates or unawaited DOM samples as measurement evidence.
+When a framework serves browser modules, assert their content types and await the
+actual browser module execution / resulting behavior; HTTP 200 asset checks alone
+do not establish that the browser can load them.

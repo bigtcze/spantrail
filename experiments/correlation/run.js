@@ -37,8 +37,8 @@ function bounded(promise, ms, label) {
   return Promise.race([Promise.resolve(promise), new Promise((_, reject) => { timer = setTimeout(() => reject(new BoundedTimeoutError(label, ms)), ms); })]).finally(() => clearTimeout(timer));
 }
 
-export function startChild({ spawn = nodeSpawn, childProgram = resolve(dir, 'server-entry.js'), startupTimeout = 10000 } = {}) {
-  const child = spawn(process.execPath, [childProgram], { cwd: dir, env: { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('OTEL_'))), OTEL_EXPORTER_OTLP_ENDPOINT: 'http://127.0.0.1:1' }, stdio: ['ignore', 'inherit', 'inherit', 'ipc'] });
+export function startChild({ spawn = nodeSpawn, childProgram = resolve(dir, 'server-entry.js'), preload, startupTimeout = 10000 } = {}) {
+  const child = spawn(process.execPath, [...(preload ? ['--require', preload] : []), childProgram], { cwd: dir, env: { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('OTEL_'))), OTEL_EXPORTER_OTLP_ENDPOINT: 'http://127.0.0.1:1' }, stdio: ['ignore', 'inherit', 'inherit', 'ipc'] });
   let settled = false;
   let exitInfo;
   let resolveExit;
@@ -72,7 +72,7 @@ async function fetchSpans(origin, timeoutMs, signal) {
 }
 
 export async function runProof(options = {}) {
-  const { spawn, childProgram, skipProofOperations = false, startupTimeout = 10000, browserTimeout = 15000, diagnosticTimeout = 2000, pollTimeout = 12000, childStopOptions, output = true, onFailure } = options;
+  const { spawn, childProgram, preload, artifactPath = resolve(dir, 'artifacts/proof.json'), skipProofOperations = false, startupTimeout = 10000, browserTimeout = 15000, diagnosticTimeout = 2000, pollTimeout = 12000, childStopOptions, output = true, onFailure } = options;
   let launchBrowser = options.launchBrowser;
   if (!launchBrowser) launchBrowser = async launchOptions => { const { chromium } = await import('playwright'); return chromium.launch(launchOptions); };
   let childState;
@@ -97,7 +97,7 @@ export async function runProof(options = {}) {
     return closePromise;
   };
   try {
-    childState = startChild({ spawn, childProgram, startupTimeout });
+    childState = startChild({ spawn, childProgram, preload, startupTimeout });
     const message = await interruptible(childState.ready);
     if (interrupted) throw interrupted;
     const origin = `http://127.0.0.1:${message.port}`;
@@ -158,8 +158,8 @@ export async function runProof(options = {}) {
     assert.ok(requests.filter(request => new URL(request.url).pathname !== '/api/action').every(request => !('traceparent' in request.headers)));
     if (interrupted) throw interrupted;
     const artifact = { actions: actions.map(({ traceId, spanId }) => ({ traceId, spanId })), spans: spans.map(({ name, kind, path, traceId, spanId, parentSpanId, durationMs, source, statusCode }) => ({ name, kind, path, traceId, spanId, parentSpanId, durationMs, source, statusCode })) };
-    await mkdir(resolve(dir, 'artifacts'), { recursive: true }); await writeFile(resolve(dir, 'artifacts/proof.json'), `${JSON.stringify(artifact, null, 2)}\n`);
-    if (output) console.log(`Wrote ${resolve(dir, 'artifacts/proof.json')}`);
+    await mkdir(dirname(artifactPath), { recursive: true }); await writeFile(artifactPath, `${JSON.stringify(artifact, null, 2)}\n`);
+    if (output) console.log(`Wrote ${artifactPath}`);
     return artifact;
   } catch (error) { operationFailed = true; primaryError = error; try { onFailure?.(error); } catch {} throw error; }
   finally {
