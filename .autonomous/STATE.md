@@ -10,8 +10,11 @@ is not satisfied; this remains a controlled fixture, not application integration
 
 Repository status:
 Cycle began on main at `321e4bc` with incomplete, uncommitted demo work. No open
-GitHub issues or pull requests; main CI run `37066371601` passed. This cycle
-completes that existing work on a feature branch for publication and CI review.
+GitHub issues or pull requests; main CI run `37066371601` passed. Completed demo
+implementation `0f4b3eb` is published on `feat/controlled-demo` in open PR
+https://github.com/bigtcze/spantrail/pull/4. Its push and pull-request CI passed.
+This publication-record commit changes only this state file; check the latest
+head gate before merging.
 
 ## Changes in this cycle
 
@@ -54,7 +57,9 @@ Node.js 24.21.0, npm 11.19.0, TypeScript 6.0.3, Playwright 1.63.0 on Linux.
   npm-launched demo served HTTP 200, exited 130/143 after SIGINT/SIGTERM, stopped
   responding, and allowed rebinding their exact ports. For npm runs, signals went
   to the owned Node demo child, not an assumed signal-forwarding npm wrapper.
-- `git diff --check`: passed. Publication CI will be recorded after it completes.
+- `git diff --check`: passed. Implementation `0f4b3eb` passed GitHub push CI
+  run `37188360104` and pull-request CI run `37188373848`, including fresh
+  lockfile installation, browser setup, and the full integrated `npm test` gate.
 
 Immediate next action:
 Resolve this demo PR/CI first. Then measure documented installation and time to a
