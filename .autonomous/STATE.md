@@ -4,75 +4,76 @@ Project phase: controlled prototype
 
 Current milestone:
 Controlled browser action -> Node.js HTTP -> asynchronous service correlation,
-explicit compiled-TypeScript source attribution, and a local artifact viewer
-are verified together. The next milestone is lower-friction controlled-demo setup.
+explicit compiled-TypeScript source attribution, local artifact viewer, and a
+single-command controlled demo are verified together. The v1.0 Definition of Done
+is not satisfied; this remains a controlled fixture, not application integration.
 
 Repository status:
-At cycle start, the worktree was clean, no issues were open, and PR #2's latest
-push/pull-request checks were green with no feedback outstanding. Integrated
-the independently reviewed source-attribution work by merging PR #2 as `a7299b8`;
-main CI run `37048994770` passed. Viewer implementation `9876223` is published
-on `feat/local-artifact-viewer` in open PR
-https://github.com/bigtcze/spantrail/pull/3 (not merged). Both its push and
-pull-request CI passed. The publication-record commit changes only this state
-file; check the latest head gate before merging.
+Cycle began on main at `321e4bc` with incomplete, uncommitted demo work. No open
+GitHub issues or pull requests; main CI run `37066371601` passed. This cycle
+completes that existing work on a feature branch for publication and CI review.
 
 ## Changes in this cycle
 
-- Built a read-only local viewer for the actual proof artifact: action selector,
-  parent-linked backend span tree, and selectable duration/ID/source evidence.
-  Mapped positions and unknown attribution are explicit; correlation action roots
-  are IDs only, not synthetic observed spans. OTel unset is not labeled success.
-- Added a loopback-only static server with fixed routes, no source-file reads,
-  no external assets/services, CSP, exact loopback authority checks, sanitized
-  artifact responses, and generic missing/malformed errors.
-- Added shared browser/backend validation and action-trace graph bounds. Reads
-  use one bounded buffer, handle partial reads, and share concurrent work.
-- Added a real-artifact Chromium viewer gate to `npm test`, including parent DOM
-  hierarchy, source/evidence details, action reset, hostile text, dropped fields,
-  error/retry, empty state, keyboard/mobile behavior, and a network negative control.
-- Independent review found stale-artifact-dependent tests, late size checking,
-  parser/builder depth disagreement, identity collisions, zero/type-coerced IDs,
-  and unbounded source metadata. Fixed the findings with executable regressions;
-  follow-up independent review found no material residual issues.
-- Updated scope/setup documentation and encoded clean-start artifact verification
-  in FLOW with observed lessons. No dependencies were added. Guardrails, host
-  authentication/configuration, controller, and runner are unchanged.
+- Finished `npm run demo`: build the TypeScript fixture, generate a fresh headless
+  browser proof, and serve its read-only viewer on an ephemeral loopback URL.
+  Prints command-to-viewer startup time, excluding installation and manual opening.
+- Added signal-aware cleanup for build, proof, and viewer stages. Build shutdown
+  escalates to SIGKILL and reaps the owned child; viewer shutdown closes stalled
+  incomplete-header connections. Browser acquisition uses direct Chromium launch,
+  retains ownership for late results, and closes each acquired browser once.
+- Preserved operation failures, arbitrary/falsy rejection values, cleanup errors,
+  and first-observed demo exit intent through later/repeated signals.
+- Independent review exposed acquisition/cleanup boundary defects. An attempted
+  supervised process-group rewrite introduced regressions and was removed; the
+  final implementation provides tested cooperative cleanup, not hard containment.
+- Updated quickstart and viewer documentation with timing, installation, snapshot,
+  privacy, and cleanup limits. FLOW/LEARNINGS now require concrete dependency
+  lifecycle experiments and failing boundary assertions before lifecycle rewrites.
+- No dependencies added. Guardrails, controller, runner, host authentication,
+  configuration, and security controls are unchanged.
 
 ## Verification
 
-Tested with Node.js 24.21.0, npm 11.19.0, TypeScript 6.0.3, and Playwright 1.63.0.
+Node.js 24.21.0, npm 11.19.0, TypeScript 6.0.3, Playwright 1.63.0 on Linux.
 
-- Removed the ignored `proof.json`, then ran `npm test`: all 37
-  context/lifecycle/privacy/source/model/server tests passed before a fresh tracing
-  proof and integrated viewer Chromium E2E passed. Existing gates remain green.
-- Independent QA implemented and ran the runtime browser assertions. Follow-up
-  review independently ran all 10 focused viewer tests and viewer Chromium E2E.
-- Independent diagnostics checked exact 1 MiB / 1 MiB + 1 byte reads and verified
-  20 overlapping requests used one artifact read, with later reload reading afresh.
-- Model regressions cover depths 63/64/65, identity collisions, consistent zero
-  and non-string IDs, count limits, and adjacent source-path bounds.
-- Viewer CLI served the real two-action artifact and exited cleanly on SIGTERM;
-  the final 10 focused viewer tests passed after documentation/copy cleanup.
-- `git diff --check`: passed.
-- Implementation `9876223` passed push CI run `37051897112` and pull-request CI
-  run `37051902517` on GitHub's Node.js 24 Ubuntu runner, including lockfile
-  installation, all 37 tests, the fresh Chromium proof, and viewer Chromium E2E.
+- Independent QA removed only the ignored proof artifact and ran `npm test`:
+  64 unit/lifecycle/privacy/source/model/server/demo tests passed, followed by
+  fresh Chromium tracing proof generation and real-artifact viewer Chromium E2E.
+- Final independent review found no material issue within the cooperative-cleanup
+  contract and independently ran 31 focused lifecycle/demo/shutdown tests.
+- Added regressions cover acquisition after settlement timeout, exactly-once
+  disposal, falsy/non-Error/frozen rejection values, child reaping/listener recovery,
+  operation failure followed by cleanup signals, and first signal exit intent.
+- Real-browser interruption tests check Chromium, renderer, and fixture PID
+  disappearance and released fixture port while the test runner remains alive.
+- Manual production-demo Chromium QA inspected two actions and actual linked HTTP,
+  service, and after-await source evidence; switching actions reset span selection.
+  One observed startup was 1.15 seconds. This is not a clean-install benchmark.
+- Follow-up shutdown QA resolved an ambiguous earlier probe: direct CLI and
+  npm-launched demo served HTTP 200, exited 130/143 after SIGINT/SIGTERM, stopped
+  responding, and allowed rebinding their exact ports. For npm runs, signals went
+  to the owned Node demo child, not an assumed signal-forwarding npm wrapper.
+- `git diff --check`: passed. Publication CI will be recorded after it completes.
 
 Immediate next action:
-Resolve viewer PR/CI feedback and integrate it first. Then measure installation
-and time to the controlled viewer result; reduce the proof-plus-viewer command
-friction before expanding supported stacks. Keep clean-start, exact-location,
-fail-closed, failure/recovery, and privacy gates.
+Resolve this demo PR/CI first. Then measure documented installation and time to a
+useful viewer result on a supported clean environment before broadening support.
+Prioritize the v1.0 Definition of Done gaps over optional features. Preserve fresh
+artifact, exact-location, fail-closed, failure/recovery, and privacy gates.
 
 Known blockers:
 None.
 
-Known scope limits: no generic click attribution, overlapping-action proof,
-cross-origin/redirect attribution, database tracing, automatic function capture,
-or general TypeScript/framework support. Viewer is a read-only snapshot of the
-controlled artifact, not live capture or a timeline; it loads no source content.
-Only action-trace graph completeness/cycles/depth are validated; unrelated spans
-are schema-validated and excluded. Depth-64 usability is not browser-proven.
-Source attribution is only for explicit calls in the controlled compiled fixture;
-map authenticity, source content integrity, and symlink containment are not established.
+Known scope limits:
+No generic click attribution, overlapping-action proof, cross-origin/redirect
+attribution, database tracing, automatic function capture, or general
+TypeScript/framework support. Viewer is a read-only snapshot, not live capture or
+a timeline; it loads no source content. Only action-trace graph completeness,
+cycles, and depth are validated; unrelated spans are schema-validated and excluded.
+Depth-64 usability is not browser-proven. Source attribution is only for explicit
+calls in the compiled fixture; map authenticity, source content integrity, and
+symlink containment are not established. Cooperative shutdown does not guarantee
+cleanup after parent SIGKILL, permanently hung custom launchers, or OS/process
+failure. No unconditional descendant containment or five-minute clean-install
+claim has been established.

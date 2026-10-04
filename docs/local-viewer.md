@@ -1,24 +1,48 @@
 # Local proof viewer
 
-## Run
+## Controlled demo
 
-After installing dependencies and Playwright Chromium as described in the
-[README](../README.md), run from the repository root:
+The shortest end-to-end path is `npm run demo`, after installing dependencies and
+Playwright Chromium as described in the [README](../README.md). It builds the
+compiled TypeScript fixture, runs the existing fresh headless Chromium proof, and
+starts the viewer for the resulting artifact. The command prints an ephemeral
+loopback URL and command-to-viewer startup duration. Open the URL manually; stop
+the viewer with Ctrl+C. It does not install dependencies, open a browser, or
+contact external services. `PORT` optionally selects a port from `0` through
+`65535`; `PORT=0 npm run demo` requests an ephemeral port. The reported duration
+excludes installation and manual URL opening; it is neither a benchmark nor a
+general under-60-seconds guarantee. SIGINT/SIGTERM cleanup is tested across build,
+proof, and viewer startup; if a browser-launch promise fulfills late, its browser
+is disposed when acquired. Shutdown waits only for a bounded time and cannot
+guarantee process cleanup after parent SIGKILL, a permanently hung custom
+launcher, or OS/process failure. This is cooperative cleanup, not hard process
+containment or an unconditional no-orphan guarantee. The local-runtime/no-network
+statement does not cover the prior `npm ci` or Playwright browser installation,
+which may download packages and browser binaries.
+
+This is a controlled fixture proof followed by a read-only snapshot, not
+interactive live tracing or a live stream/timeline. The viewer loads no source
+content, external assets, collectors, or LLMs.
+
+## Focused viewer and proof commands
+
+To inspect an existing artifact without regenerating it, run from the repository
+root:
 
 ```sh
-npm run proof
 npm run viewer
 ```
 
-Open the printed loopback URL (default `http://127.0.0.1:4318`). Select an action
-and then a span to inspect its evidence. Use **Reload artifact** after regenerating
-the proof. Set `PORT` to choose another port and stop the server with Ctrl+C.
+This command defaults to `http://127.0.0.1:4318`; `PORT` can choose another port.
+Select an action and then a span to inspect its evidence. Use **Reload artifact**
+after regenerating the proof. Stop the server with Ctrl+C. The focused
+`npm run proof` command generates a fresh proof artifact; `npm run test:viewer`
+runs only the viewer browser gate and consumes
+`experiments/correlation/artifacts/proof.json` (run `npm run proof` first if it is
+missing or stale).
 
 `npm test` runs the full gate: unit/model/server tests, a fresh real Chromium
 correlation proof, then viewer Chromium E2E against that proof artifact.
-`npm run test:viewer` runs only the viewer browser gate and consumes the existing
-`experiments/correlation/artifacts/proof.json`; run `npm run proof` first if it is
-missing or stale.
 
 ## Local boundaries and limits
 

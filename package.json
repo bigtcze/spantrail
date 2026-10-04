@@ -11,11 +11,12 @@
     "build": "node experiments/source-attribution/build.js",
     "test": "npm run test:unit && npm run proof && npm run test:viewer",
     "pretest:unit": "npm run build",
-    "test:unit": "node --test experiments/correlation/*.test.js experiments/source-attribution/*.test.js experiments/viewer/*.test.js",
+    "test:unit": "node --test experiments/correlation/*.test.js experiments/source-attribution/*.test.js experiments/viewer/*.test.js experiments/demo/*.test.js",
     "preproof": "npm run build",
     "proof": "node experiments/correlation/run.js",
     "test:viewer": "node experiments/viewer/e2e.js",
-    "viewer": "node experiments/viewer/server.js"
+    "viewer": "node experiments/viewer/server.js",
+    "demo": "node experiments/demo/run.js"
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "0.3.31",

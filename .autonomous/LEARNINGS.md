@@ -5,6 +5,11 @@ Record process improvements, disproved assumptions and durable lessons here.
 Do not turn this into a raw activity log. Only record information that should
 change future behaviour.
 
+## 2026-10-04 — Keep process cleanup claims cooperative
+
+- Supervising Playwright's default detached children added complexity and regressions: forcing `detached: false` conflicts with Playwright's internal negative-PGID kills. Removing that attempted containment was safer than claiming hard containment. Cleanup tests must also cover a launch promise that fulfills after its shutdown deadline and a falsy rejection; a broad suite (51 tests) had missed those boundaries, while later regression verification covered 64 unit tests, fresh proof, and viewer. A fake that reused an already-exited emitter left an await unsettled, and an inline test had invalid JavaScript, so validate test harnesses against real lifecycle semantics.
+- Before lifecycle rewrites, use a minimal runtime experiment to establish dependency ownership/acquisition and kill semantics; add the concrete failing boundary assertion before expanding architecture, and reconcile known failures before delegating a new writer. This narrows speculative supervision work and makes the required boundary observable first.
+
 ## 2026-10-02 — Make the correlation evidence path binding
 
 - Native ESM loading of `node:http` did not activate the installed OpenTelemetry

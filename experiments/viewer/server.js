@@ -25,7 +25,7 @@ export async function readBoundedArtifact(path, openFile = open) {
 }
 const send = (res, status, body, type = 'application/json; charset=utf-8', method = 'GET') => { res.writeHead(status, { 'content-type': type, 'content-security-policy': csp, 'x-content-type-options': 'nosniff', 'cache-control': 'no-store' }); res.end(method === 'HEAD' ? undefined : body); };
 
-export async function startViewer({ artifactPath = defaultArtifact, port = 0 } = {}) {
+export async function startViewer({ artifactPath = defaultArtifact, port = 0, closeTimeout = 500 } = {}) {
   let inFlightArtifact;
   const server = createServer(async (req, res) => {
     const method = req.method;
@@ -54,7 +54,19 @@ export async function startViewer({ artifactPath = defaultArtifact, port = 0 } =
   });
   await new Promise((resolveListen, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolveListen); });
   const address = server.address();
-  return { server, origin: `http://127.0.0.1:${address.port}`, close: () => new Promise((resolveClose, reject) => server.close(error => error ? reject(error) : resolveClose())) };
+  let closePromise;
+  const close = () => {
+    if (closePromise) return closePromise;
+    closePromise = new Promise((resolveClose, reject) => {
+      let timer;
+      const finish = error => { clearTimeout(timer); error ? reject(error) : resolveClose(); };
+      server.close(finish);
+      timer = setTimeout(() => server.closeAllConnections(), closeTimeout);
+      timer.unref?.();
+    });
+    return closePromise;
+  };
+  return { server, origin: `http://127.0.0.1:${address.port}`, close };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

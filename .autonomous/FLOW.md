@@ -35,7 +35,12 @@ For substantial work:
 
 Use browser automation for user-visible features whenever practical.
 
-Use disposable fixture applications for tracing/instrumentation tests.
+Use disposable fixture applications for tracing/instrumentation tests. Before
+rewriting process lifecycle supervision, validate dependency ownership,
+acquisition timing, and kill semantics with a minimal runtime experiment. Add a
+concrete failing assertion for the reported lifecycle boundary before expanding
+the architecture; reconcile any known failing state before delegating another
+writer.
 
 Before accepting delegated implementation, map each acceptance criterion to a
 specific executable assertion and inspect that the tested path is the runtime
