@@ -61,8 +61,20 @@ both artifacts. See the reproduction commands and precise limits in
 integration validation step, not the v1.0 conventional-framework gate: the runtime
 has fixture-hardcoded route/name allowlists, the app explicitly imports snapshot
 and shutdown support, and it does not support arbitrary CLI apps, ESM, or route,
-layer, and function capture. The next product step is a genuinely reusable
-application integration (or another v1.0 gap), not broadening the support claim.
+layer, and function capture.
+
+A separate reusable local CommonJS session now removes fixture-specific route/name
+allowlists and app-imported snapshot/shutdown plumbing for temporary app processes.
+It accepts an absolute `.cjs` entry and leaves readiness to the caller. It captures
+HTTP and explicit OpenTelemetry application spans, redacting names/paths and
+reporting unknown source. Real Chromium actions use application-supplied contexts;
+the resulting fresh artifact is inspected in the unchanged viewer. This is a narrow
+programmatic proof, not a published package/CLI, automatic browser injector, or
+broad framework-support claim. See
+[the session proof](../docs/correlation-proof.md#local-commonjs-session-proof).
+The next step is an end-user command/browser-context workflow or another v1.0 gap,
+not broadening support claims.
+
 A cold machine setup observation is documented in the [local viewer guide](../docs/local-viewer.md),
 but it is not a benchmark and does not establish the five-minute
 unfamiliar-developer gate. AppMap and Jaeger are useful reference points; these

@@ -23,7 +23,7 @@ This is a controlled fixture demonstration, not interactive live tracing: the vi
 
 ## Focused proof and viewer workflows
 
-`npm test` builds the fixtures, runs unit/lifecycle/source-attribution and Express tests, generates both real Chromium proof artifacts, and runs the viewer E2E against both artifacts. The source-attribution proof sends actual requests through the traced server and executes compiled fixture code; failure-path source-map cases use disposable copies. To generate only the correlation proof artifact, run `npm run proof`; it writes `experiments/correlation/artifacts/proof.json`. For the focused Express reproduction commands and limits, see the [browser correlation proof](docs/correlation-proof.md#express-521-commonjs-integration-proof).
+`npm test` builds the fixtures, runs unit/lifecycle/source-attribution, Express, and capture-session tests, generates both legacy Chromium proof artifacts, and runs the viewer E2E against both. The capture-session gate also verifies its own fresh temporary artifact in the actual viewer. The source-attribution proof sends actual requests through the traced server and executes compiled fixture code; failure-path source-map cases use disposable copies. To generate only the correlation proof artifact, run `npm run proof`; it writes `experiments/correlation/artifacts/proof.json`. For the focused Express reproduction commands and limits, see the [browser correlation proof](docs/correlation-proof.md#express-521-commonjs-integration-proof).
 
 To view an already-generated artifact without rerunning the proof, run:
 
@@ -34,6 +34,10 @@ npm run viewer
 This existing-artifact viewer defaults to `http://127.0.0.1:4318`; `PORT` selects another port. Select an action, then a span to inspect its parent-linked execution trail, observed duration, identifiers, and mapped source location or explicit unknown attribution. Unrelated requests stay out of the action trails.
 
 The viewer loads no source content and uses no external assets or services. See the [browser correlation proof](docs/correlation-proof.md), [source-attribution proof](docs/source-attribution-proof.md), and [local viewer guide](docs/local-viewer.md) for architecture, validation, privacy, and browser acceptance coverage.
+
+## Local CommonJS capture session
+
+The focused capture lifecycle gate is `npm run test:capture`. Its reusable entry point and precise privacy, shutdown, and support boundaries are documented in the [CommonJS session proof](docs/correlation-proof.md#local-commonjs-session-proof).
 
 ## Current scope
 

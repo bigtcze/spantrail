@@ -56,6 +56,13 @@ new artifact consumer or test gate, remove the relevant ignored generated
 artifact and run the complete producer-to-consumer gate. A warm-workspace pass
 does not establish fresh-checkout behavior.
 
+For new runtime integrations, inspect each installed method's signature and
+completion contract individually; exporter callbacks and Promise-returning
+flush/shutdown may coexist. Test protocol acknowledgement separately from observed
+process exit. Use a finite app without `process.exit` to establish natural exit.
+Reconcile delegated test scope against concrete assertions, ensuring fixtures
+actually provide the context markers they claim to exercise.
+
 For best-effort runtime APIs, a plausible result is not proof of validity. Test
 adjacent valid/invalid boundaries, not only wholly empty inputs; source-map
 checks must include unmapped code after mapped code and source-less segments.

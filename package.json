@@ -9,7 +9,8 @@
   "type": "module",
   "scripts": {
     "build": "node experiments/source-attribution/build.js",
-    "test": "npm run test:unit && npm run test:express && npm run proof && npm run proof:express && npm run test:viewer:express && npm run test:viewer",
+    "test": "npm run test:unit && npm run test:express && npm run test:capture && npm run proof && npm run proof:express && npm run test:viewer:express && npm run test:viewer",
+    "test:capture": "node --test experiments/capture/*.test.js",
     "pretest:unit": "npm run build",
     "test:unit": "node --test experiments/correlation/*.test.js experiments/source-attribution/*.test.js experiments/viewer/*.test.js experiments/demo/*.test.js",
     "pretest:express": "npm run build",

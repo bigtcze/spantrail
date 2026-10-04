@@ -131,6 +131,48 @@ Cooperative shutdown deadlines do not guarantee flush or drain. Mapped source
 attribution remains limited to the explicitly instrumented controlled TypeScript
 fixture and its approved source map; other spans report unknown.
 
+## Local CommonJS session proof
+
+`experiments/capture/session.js` exports the programmatic `startCapture` entry
+point for an existing absolute `.cjs` application entry and working directory:
+
+```js
+import { startCapture } from './experiments/capture/session.js';
+
+const capture = await startCapture({ entry: '/absolute/path/to/app.cjs', cwd: '/path/to/app' });
+// The caller starts/awaits application readiness using its own application contract.
+const spans = await capture.snapshot(); // sanitized spans only
+const exit = await capture.stop(); // resolves when the child exit is observed
+```
+
+This is a local CommonJS session helper, not a published package, generic CLI,
+npm wrapper, or arbitrary browser injector. It forks the app with the local
+CommonJS preload. Application readiness is caller-managed: the helper does not
+infer that the server is listening. Child stdout/stderr remain raw application
+output and are not redacted by the capture schema. Applications may use the
+OpenTelemetry API explicitly to create application spans; browser tests must
+supply their own trace contexts. The viewer's temporary artifact is used for the
+actual browser gate; no capture artifact is retained by default.
+
+Completed records are sanitized: generic span names, null paths, and unknown
+source; arbitrary application names, attributes, error messages, paths, headers,
+and bodies are not returned. Existing `OTEL_` environment variables are cleared
+in the child. The in-memory exporter uses the installed SDK's callback-style
+export and Promise-returning `forceFlush`/`shutdown` contracts. A working
+loopback tripwire negative control verifies detection of remote-export attempts;
+the capture test verifies hostile exporter settings do not result in HTTP(S)
+attempts. These are test-bound privacy claims, not an OS sandbox.
+
+The fail-closed limit is 1,000 completed spans. It is not a total heap bound,
+in-flight span limit, or bound on raw application-side collection. Shutdown
+requests cooperative SDK flush/shutdown and waits for observed child exit, with
+SIGTERM/SIGKILL deadlines of 1/6/9 seconds. Those deadlines do not guarantee a
+flush, descendant containment, or sandboxing. The application owns readiness,
+server semantics, and its process behavior; this proof adds no source attribution.
+
+`npm run test:capture` exercises the entry point and lifecycle/schema boundaries.
+The section documents this narrow integration, not broad framework support.
+
 ## Implementation boundary
 
 The fixture browser creates a fresh W3C trace context for each serialized,
