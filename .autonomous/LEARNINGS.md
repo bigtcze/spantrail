@@ -5,6 +5,21 @@ Record process improvements, disproved assumptions and durable lessons here.
 Do not turn this into a raw activity log. Only record information that should
 change future behaviour.
 
+## 2026-10-04 — Measure onboarding with awaited evidence
+
+- Two delegated QA passes failed to capture the required full elapsed clock or
+  preserve raw logs; unawaited DOM samples could also be stale. A replacement
+  timestamped sequential probe with awaited viewer assertions recorded setup,
+  inspection, shutdown, environment, and a clean source snapshot. The measured
+  27.531 seconds is one machine observation, not a benchmark or the human
+  unfamiliar-developer five-minute gate. FLOW now requires this evidence format
+  and separates manual URL opening from measured automation.
+
+## 2026-10-04 — Keep process cleanup claims cooperative
+
+- Supervising Playwright's default detached children added complexity and regressions: forcing `detached: false` conflicts with Playwright's internal negative-PGID kills. Removing that attempted containment was safer than claiming hard containment. Cleanup tests must also cover a launch promise that fulfills after its shutdown deadline and a falsy rejection; a broad suite (51 tests) had missed those boundaries, while later regression verification covered 64 unit tests, fresh proof, and viewer. A fake that reused an already-exited emitter left an await unsettled, and an inline test had invalid JavaScript, so validate test harnesses against real lifecycle semantics.
+- Before lifecycle rewrites, use a minimal runtime experiment to establish dependency ownership/acquisition and kill semantics; add the concrete failing boundary assertion before expanding architecture, and reconcile known failures before delegating a new writer. This narrows speculative supervision work and makes the required boundary observable first.
+
 ## 2026-10-02 — Make the correlation evidence path binding
 
 - Native ESM loading of `node:http` did not activate the installed OpenTelemetry

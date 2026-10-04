@@ -51,9 +51,13 @@ read-only snapshot, not a live capture UI or timeline; correlation action roots
 have IDs only, not synthetic observed spans. See
 [`docs/local-viewer.md`](../docs/local-viewer.md).
 
-The next product step is reducing controlled-demo setup friction and measuring
-time to a useful viewer result, not broad stack expansion. AppMap and Jaeger are
-useful reference points; these proofs establish no comparative advantage.
+The next product step is validating a reusable conventional Node backend
+application integration to close a v1.0 Definition of Done gap, after completing
+the pending controlled-demo PR follow-up and its CI. Do not claim framework
+support before validation. A cold machine setup observation is documented in the
+[local viewer guide](../docs/local-viewer.md), but it is not a benchmark and does not
+establish the five-minute unfamiliar-developer gate. AppMap and Jaeger are useful
+reference points; these proofs establish no comparative advantage.
 
 This file is intentionally mutable.
 Update it when evidence changes the product strategy.

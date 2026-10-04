@@ -77,8 +77,122 @@ test('spawn errors reject readiness without leaking unhandled errors', async () 
   await assert.rejects(state.ready, error => error === expected);
 });
 
-test('SIGTERM during delayed browser launch retains cleanup and rejects', async () => {
-  await assertInterruptedCleanup('launch', 'SIGTERM');
+test('Playwright signal handling is disabled so runProof owns terminal cleanup signals', async () => {
+  let launchOptions;
+  await assert.rejects(runProof({
+    childProgram: fixture,
+    spawn: (...args) => withMode('ready')(...args),
+    launchBrowser: async options => { launchOptions = options; throw new Error('stop after launch options'); },
+    output: false,
+  }), /stop after launch options/);
+  assert.equal(launchOptions.handleSIGINT, false);
+  assert.equal(launchOptions.handleSIGTERM, false);
+});
+
+test('SIGTERM during pending launch waits for late server acquisition and closes it', async () => {
+  let pid;
+  let closeCalled = false;
+  let resolveLaunch;
+  let markLaunchEntered;
+  const launchGate = new Promise(resolve => { resolveLaunch = resolve; });
+  const launchEntered = new Promise(resolve => { markLaunchEntered = resolve; });
+  const run = runProof({
+    childProgram: fixture,
+    spawn: (...args) => { const processChild = withMode('ready')(...args); pid = processChild.pid; return processChild; },
+    launchBrowser: () => { markLaunchEntered(); return launchGate; },
+    output: false,
+  });
+  let completed = false;
+  run.finally(() => { completed = true; }).catch(() => {});
+  await launchEntered;
+  process.emit('SIGTERM');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(completed, false, 'runProof must not complete before pending launch settles');
+  resolveLaunch({ close: async () => { closeCalled = true; } });
+  await assert.rejects(run, /Interrupted by SIGTERM/);
+  assert.equal(closeCalled, true, 'late-acquired browser server must be closed');
+  assert.equal(dead(pid), true, 'child process must be reaped');
+});
+
+test('browser acquired after bounded launch settlement is closed exactly once', async () => {
+  let pid;
+  let resolveLaunch;
+  let closeCalls = 0;
+  const launch = new Promise(resolve => { resolveLaunch = resolve; });
+  let markLaunchEntered;
+  const launchEntered = new Promise(resolve => { markLaunchEntered = resolve; });
+  const listeners = Object.fromEntries(['SIGINT', 'SIGTERM', 'SIGHUP'].map(signal => [signal, process.listenerCount(signal)]));
+  const run = runProof({ childProgram: fixture, spawn: (...args) => { const child = withMode('ready')(...args); pid = child.pid; return child; }, browserTimeout: 3000, launchBrowser: () => { markLaunchEntered(); return launch; }, output: false });
+  await launchEntered;
+  process.emit('SIGTERM');
+  let caught = false;
+  try { await run; } catch (error) { caught = true; assert.ok(error instanceof AggregateError); }
+  assert.equal(caught, true);
+  const acquired = { close: async () => { closeCalls += 1; } };
+  resolveLaunch(acquired);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(closeCalls, 1);
+  assert.equal(dead(pid), true);
+  for (const signal of Object.keys(listeners)) assert.equal(process.listenerCount(signal), listeners[signal]);
+});
+
+test('falsey and frozen launch rejections preserve identity and cleanup listeners', async t => {
+  for (const expected of [null, undefined, false, 0, '', {}, Object.freeze(new Error('frozen'))]) {
+    await t.test(String(expected), async () => {
+      let pid;
+      const listeners = Object.fromEntries(['SIGINT', 'SIGTERM', 'SIGHUP'].map(signal => [signal, process.listenerCount(signal)]));
+      let caught = false;
+      try {
+        await runProof({
+          childProgram: fixture,
+          spawn: (...args) => { const child = withMode('ready')(...args); pid = child.pid; return child; },
+          launchBrowser: async () => { throw expected; }, output: false,
+        });
+      } catch (reason) {
+        caught = true;
+        assert.equal(reason, expected);
+      }
+      assert.equal(caught, true);
+      assert.equal(dead(pid), true);
+      for (const signal of Object.keys(listeners)) assert.equal(process.listenerCount(signal), listeners[signal]);
+    });
+  }
+});
+
+test('browser close interruption does not replace operation failure', async () => {
+  const operation = new Error('new page failed');
+  let pid;
+  const listeners = Object.fromEntries(['SIGINT', 'SIGTERM', 'SIGHUP'].map(signal => [signal, process.listenerCount(signal)]));
+  let caught;
+  try {
+    await runProof({
+      childProgram: fixture,
+      spawn: (...args) => { const child = withMode('ready')(...args); pid = child.pid; return child; },
+      launchBrowser: async () => ({ newPage: async () => { throw operation; }, close: async () => { process.emit('SIGINT'); } }),
+      output: false,
+    });
+  } catch (reason) { caught = reason; }
+  assert.equal(caught, operation);
+  assert.equal(dead(pid), true);
+  for (const signal of Object.keys(listeners)) assert.equal(process.listenerCount(signal), listeners[signal]);
+});
+
+test('operation failure remains available when browser cleanup also fails', async () => {
+  const operation = new Error('primary operation failure');
+  const cleanup = new Error('primary close failure');
+  await assert.rejects(runProof({
+    childProgram: fixture,
+    spawn: (...args) => withMode('ready')(...args),
+    startupTimeout: 1000,
+    launchBrowser: async () => ({ newPage: async () => { throw operation; }, close: async () => { throw cleanup; }, kill: async () => { throw new Error('kill failure'); } }),
+    output: false,
+  }), error => {
+    assert.ok(error instanceof AggregateError);
+    assert.equal(error.cause, operation, 'primary operation error is preserved as cause');
+    assert.ok(error.errors.includes(operation), 'primary operation error remains in aggregate members');
+    assert.ok(error.errors.some(item => item.message === 'primary close failure'), 'cleanup error remains in aggregate members');
+    return true;
+  });
 });
 
 test('repeated SIGTERM during delayed browser close retains cleanup and rejects', async () => {
