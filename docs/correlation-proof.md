@@ -174,9 +174,25 @@ server semantics, and its process behavior; this proof adds no source attributio
 `npm run test:capture` exercises the entry point and lifecycle/schema boundaries.
 The section documents this narrow integration, not broad framework support.
 
+## Repo-local capture command
+
+The experimental repo-local `npm run capture` command joins a CommonJS capture session to one configured Chromium click and the existing viewer. It is not a published package or general `npx`/npm command wrapper. From the repository root, with Node.js 24, npm dependencies installed, and Playwright Chromium installed, start an instrumented app through the command (it inherits the current environment):
+
+```sh
+PORT=3000 npm run capture -- --entry ./app.cjs --url http://127.0.0.1:3000/ --endpoint http://127.0.0.1:3000/checkout --click '#checkout' --complete '#status' --text 'checkout complete' --output ./checkout.json
+```
+
+Optional flags are `--timeout 10000`, `--headed`, and `--no-viewer`. The entry must be an existing `.cjs` file supplied by the user; this repository does not provide an `app.cjs` fixture. It starts with the current working directory and inherited environment. The app must be explicitly OpenTelemetry-instrumented for application spans. The URL and endpoint must be same-origin loopback HTTP URLs, and the endpoint must exactly match an eligible fetch from the configured click. This automates that configured trusted click; it does not record manual browsing or wrap arbitrary npm/npx commands. Selectors are used literally as CSS selectors; the required completion element's exact `textContent` must not already equal the requested text before clicking. Readiness requires a 200–299 response, navigation must succeed, and the app must reach the exact completion text. An HTTP error response from the configured endpoint can still be accepted if the app displays the configured completion text; its observed span status is not synthesized.
+
+The artifact contains spans ended at snapshot time, after the endpoint response finishes and the completion marker changes. Later-ending application work is not guaranteed to appear, even if SDK shutdown succeeds. Readiness establishes page availability, not application identity. Cleanup is cooperative: signals are owned by the command, but navigation/click operations may finish or reach their configured timeout before cleanup proceeds. Parent SIGKILL, OS failure, and descendant containment remain outside this guarantee.
+
+`--timeout` defaults to 10000 and accepts 100–60000 milliseconds per stage, not as an overall command deadline; the underlying capture stop uses its own bounded deadlines. The output parent must already exist and the target must be new: the command will not overwrite an existing path. It requires positive SDK shutdown acknowledgement and stops its capture app and browser before writing a validated artifact with mode 0600, limited to 1 MiB and containing filtered actions/spans; child exit alone does not establish SDK shutdown. App stdout/stderr are raw and not redacted. No source or request bodies are exported. By default it starts the existing loopback read-only viewer on an ephemeral port, prints its URL for manual opening, and waits for Ctrl+C; a normal viewer stop leaves the persisted artifact in place. `--no-viewer` saves the artifact and exits. `--headed` opens the actual automated capture browser; it does not hand control over for an arbitrary user flow.
+
+This is local artifact handling, not a sandbox: the app's own outbound calls and its loaded page assets are not restricted. Fetch-only capture, rejected endpoint redirects, and blocked service workers can change application semantics. XHR, navigation, arbitrary async causality, databases, generic source/function capture, ESM entries, and broad framework support are out of scope. The core flow does not require an LLM. This command does not establish the five-minute unfamiliar-developer gate or public installability.
+
 ## Programmatic browser-context capture
 
-`experiments/capture/browser-context.js` adds a narrow Playwright Chromium API. It is programmatic only; no SpanTrail CLI or command wrapper is implemented. Create the context with `createBrowserCaptureContext(browser)`, install capture before creating pages, and use the exact loopback origin and absolute endpoint URL:
+`experiments/capture/browser-context.js` adds a narrow Playwright Chromium API, usable programmatically and by the experimental repo-local capture command documented above. That command is not a published npm wrapper. Create the context with `createBrowserCaptureContext(browser)`, install capture before creating pages, and use the exact loopback origin and absolute endpoint URL:
 
 ```js
 import { chromium } from 'playwright';
@@ -198,6 +214,7 @@ try {
   // Await the application's own completion signal before taking the snapshot.
   await page.getByText('checkout complete', { exact: true }).waitFor();
   const actions = await capture.actions();
+  // After the response and application completion signal, snapshot ended-span evidence.
   const spans = await session.snapshot();
   const matchingActions = actions.filter(action => spans.some(span => span.traceId === action.traceId));
   const artifact = parseArtifact({ actions: matchingActions, spans });
@@ -207,7 +224,7 @@ try {
 }
 ```
 
-Here `session` is an independently started local capture session and `parseArtifact` is imported from `experiments/viewer/model.js`; startup/readiness is caller-managed. Await the actual request and action completion before navigating or closing the page. Install, flush via `actions()`, and dispose sequentially; concurrent lifecycle use is not guaranteed. The installer forces service workers to `block`; it does not change routing or cache behavior beyond the fetch hook.
+Here `session` is an independently started local capture session and `parseArtifact` is imported from `experiments/viewer/model.js`; startup/readiness is caller-managed. Await the actual request and application completion signal before snapshotting ended-span evidence or navigating/closing the page. This does not prove the trace is fully drained: unrelated spans may end later, and unfinished work is not established by the snapshot. Install, flush via `actions()`, and dispose sequentially; concurrent lifecycle use is not guaranteed. The installer forces service workers to `block`; it does not change routing or cache behavior beyond the fetch hook.
 
 Only a trusted top-frame click's active dispatch can generate IDs and propagate them to the configured exact endpoint. Chromium-resolved-promise microtasks in that dispatch are covered; timers, pending-await continuations, synthetic clicks, frame requests, and background requests bypass capture. Only string, URL, or Request fetch inputs are considered; this is fetch-only, not XHR or navigation. Requests to the endpoint must match its exact `href`, with no query or fragment; credentials are rejected. An original Request containing `traceparent` or `tracestate`, or either header supplied in `init`, bypasses capture even if later overridden. Selected requests use `redirect: 'error'`, blocking same- and cross-origin redirects and potentially changing application behavior.
 

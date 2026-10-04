@@ -22,6 +22,7 @@
     "proof:express": "node experiments/express/run.js",
     "test:viewer:express": "SPANTRAIL_ARTIFACT_PATH=experiments/express/artifacts/express-proof.json node experiments/viewer/e2e.js",
     "viewer": "node experiments/viewer/server.js",
+    "capture": "node experiments/capture/run.js",
     "demo": "node experiments/demo/run.js"
   },
   "devDependencies": {

@@ -69,6 +69,8 @@ It accepts an absolute `.cjs` entry and leaves readiness to the caller. It captu
 HTTP and explicit OpenTelemetry application spans, redacting names/paths and
 reporting unknown source.
 
+An experimental repo-local `npm run capture` command composes the CommonJS capture session, a configured Chromium click, artifact validation/publication, and the existing viewer. It is usable as a repo-local command, not a published npm wrapper. It requires an existing `.cjs` app entry, Node 24, installed npm dependencies/Chromium, and explicit app OpenTelemetry instrumentation for application spans. It is narrowly configured, not a generic command wrapper or public package; readiness and exact completion text are required. It captures spans ended at snapshot time, not a fully drained trace or all later-ending work. Its output handling and bounds, per-stage timeout, viewer behavior, and app-network privacy limits are documented in the [capture command proof](../docs/correlation-proof.md#repo-local-capture-command). This does not establish the five-minute onboarding gate.
+
 A narrow programmatic Chromium browser-context capture now creates the context with
 service workers blocked and installs before pages are created. Trusted top-frame
 click dispatch (including Chromium-resolved-promise microtasks) can publish generated
