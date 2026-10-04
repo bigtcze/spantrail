@@ -5,6 +5,34 @@ Record process improvements, disproved assumptions and durable lessons here.
 Do not turn this into a raw activity log. Only record information that should
 change future behaviour.
 
+## 2026-10-05 — Keep capture CLI boundary checks unconfounded
+
+- During the capture-command test cycle, URL parser cases appended replacement
+  flags without removing the original, so duplicate-option rejection masked every
+  intended URL-boundary assertion. A combined integration scenario also used an
+  already-existing output path, causing preflight rejection before its readiness
+  signal could be exercised. FLOW now calls out these concrete CLI patterns:
+  keep one instance of each required option, vary only the boundary under test,
+  and satisfy preflight conditions unrelated to the scenario. This prevents false
+  confidence from tests that never reach the intended code path.
+
+## 2026-10-05 — Regressions need lifecycle boundary assertions
+
+- Despite a green nine-test browser lane and 98-test full gate, an oracle reproduced
+  active SIGINT orphaning the app, an unbounded `page.evaluate` hook wait, a retained
+  10-second race timer, and stop resolving despite a negative SDK shutdown
+  acknowledgement. Green counts did not exercise these boundaries. The command now
+  disables Playwright signal handlers where it owns cleanup, bounds and clears
+  waits with fallback cleanup, and distinguishes SDK acknowledgement from child
+  exit. A follow-up accidentally made the stale-marker guard reject any nonempty
+  text, and several negative tests passed at that earlier boundary. Failure tests
+  now observe the intended request/shutdown markers and stage, rather than only a
+  nonzero exit. Final independent review passed 14 focused assertions and reran
+  the original lifecycle probes. The final integrated gate passed 103 tests plus
+  fresh proof generation and both viewer browser gates. Future workflows should
+  carry existing signal-ownership lessons into every new browser orchestrator,
+  and bind failure assertions to the actual boundary rather than green counts.
+
 ## 2026-10-04 — Preserve browser wrapper semantics and bound QA lanes
 
 - A real Chromium probe showed resolved-promise continuations can run during active

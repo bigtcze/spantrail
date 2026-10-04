@@ -59,14 +59,23 @@ does not establish fresh-checkout behavior.
 For new runtime integrations, inspect each installed method's signature and
 completion contract individually; exporter callbacks and Promise-returning
 flush/shutdown may coexist. Test protocol acknowledgement separately from observed
-process exit. Use a finite app without `process.exit` to establish natural exit.
-Reconcile delegated test scope against concrete assertions, ensuring fixtures
-actually provide the context markers they claim to exercise.
+process exit. Require a positive SDK shutdown acknowledgement before publishing an
+artifact; child exit alone is not proof of SDK shutdown. Use a finite app without
+`process.exit` to establish natural exit. For each new Playwright orchestrator,
+audit signal ownership across the active-browser boundary and test that the parent
+remains alive long enough to clean up the app. Readiness tests alone do not establish
+signal cleanup. Reconcile delegated test scope against concrete assertions,
+ensuring fixtures actually provide the context markers they claim to exercise.
 
 For best-effort runtime APIs, a plausible result is not proof of validity. Test
 adjacent valid/invalid boundaries, not only wholly empty inputs; source-map
 checks must include unmapped code after mapped code and source-less segments.
-Keep unrelated input dimensions valid so rejection tests cannot pass for the wrong reason.
+Keep unrelated input dimensions valid so rejection tests cannot pass for the wrong
+reason. For CLI parser boundary cases, include each required option exactly once;
+mutate only the URL under test rather than appending duplicate URL flags. For
+integration scenarios, ensure setup permits execution to reach the boundary being
+asserted (for example, use a new output path when testing readiness), so preflight
+rejection cannot mask the intended result.
 Establish allowed roots independently of observed input, and verify malformed
 diagnostic data cannot change application behavior. Check version-sensitive API
 availability against the installed runtime when documentation claims conflict.
