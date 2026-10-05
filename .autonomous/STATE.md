@@ -72,9 +72,13 @@ integration. Initial files were preserved and completed, not discarded.
 
 ## Publication
 
-Completed work is being committed on `feat/postgres-capture-proof` and published
-as a feature PR. Remote CI status and PR URL will be recorded after publication.
-Do not merge until fresh-install CI is green.
+Implementation commit `5c709da` was pushed on `feat/postgres-capture-proof` and
+PR #9 opened: https://github.com/bigtcze/spantrail/pull/9.
+Push CI `37260206902` and PR CI `37260210081` passed fresh installation, the full
+existing test/browser gate, PostgreSQL service integration, and Docker-owned
+subprocess harness tests. This publication record is a documentation-only
+follow-up. The independently reviewed PR remains open; inspect latest checks
+before merging. The autonomous v1.0 mission is not complete.
 
 ## Immediate next action
 
