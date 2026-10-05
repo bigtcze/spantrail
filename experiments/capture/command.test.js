@@ -290,12 +290,12 @@ test('preexisting traceparent and rejected browser disposal report sanitized com
   const app = await fixture(t, { preexistingTraceparent: true, rejectDispose: true });
   const port = await reservePort();
   const output = resolve(app.dir, 'absent.json');
-  const proc = launch(['--entry', app.entry, '--url', `http://127.0.0.1:${port}/`, '--endpoint', `http://127.0.0.1:${port}/checkout`, '--click', '#checkout', '--complete', '#status', '--text', 'checkout complete', '--output', output, '--timeout', '1000', '--no-viewer'], { PORT: String(port) });
+  const proc = launch(['--entry', app.entry, '--url', `http://127.0.0.1:${port}/`, '--endpoint', `http://127.0.0.1:${port}/checkout`, '--click', '#checkout', '--complete', '#status', '--text', 'checkout complete', '--output', output, '--timeout', '5000', '--no-viewer'], { PORT: String(port) });
   let pid;
   try {
     pid = Number(await waitForFile(app.startedFile, proc, 'owned app startup marker'));
     await waitForFile(app.requestFile, proc, 'request preserving preexisting traceparent');
-    const result = await within(proc.close, 'preexisting traceparent exit', 8000);
+    const result = await within(proc.close, 'preexisting traceparent exit', 15000);
     assert.equal(await readFile(app.receivedTraceparentFile, 'utf8'), '00-11111111111111111111111111111111-2222222222222222-01');
     assert.equal(result.code, 1, proc.diagnostics());
     assert.equal(proc.stderr().trim(), 'capture: browser action failed; cleanup failed: capture hooks');
@@ -315,12 +315,12 @@ test('successful capture reports rejected browser cleanup without publishing', a
   const app = await fixture(t, { rejectDispose: true });
   const port = await reservePort();
   const output = resolve(app.dir, 'absent.json');
-  const proc = launch(['--entry', app.entry, '--url', `http://127.0.0.1:${port}/`, '--endpoint', `http://127.0.0.1:${port}/checkout`, '--click', '#checkout', '--complete', '#status', '--text', 'checkout complete', '--output', output, '--timeout', '1000', '--no-viewer'], { PORT: String(port) });
+  const proc = launch(['--entry', app.entry, '--url', `http://127.0.0.1:${port}/`, '--endpoint', `http://127.0.0.1:${port}/checkout`, '--click', '#checkout', '--complete', '#status', '--text', 'checkout complete', '--output', output, '--timeout', '5000', '--no-viewer'], { PORT: String(port) });
   let pid;
   try {
     pid = Number(await waitForFile(app.startedFile, proc, 'owned app startup marker'));
     await waitForFile(app.requestFile, proc, 'successful checkout request');
-    const result = await within(proc.close, 'browser cleanup rejection exit', 8000);
+    const result = await within(proc.close, 'browser cleanup rejection exit', 15000);
     assert.equal(result.code, 1, proc.diagnostics());
     assert.equal(proc.stderr().trim(), 'capture: resource shutdown failed');
     assert.doesNotMatch(proc.diagnostics(), /PRIVATE_DISPOSE_MARKER|AggregateError/);

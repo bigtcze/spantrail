@@ -16,6 +16,10 @@ change future behaviour.
   header and combined sanitized diagnostic, and require no artifact, dead app PID,
   and closed port. Preserve both primary and cleanup failure evidence without
   exposing raw exception text. A green head run is not proof of subsequent main CI.
+  The first repair's push CI passed while PR CI exposed another confound: a one-second
+  stage budget caused real browser-close timeout in the disposal probe. Non-timeout
+  fault probes now use a five-second budget without loosening exact diagnostics;
+  deadline-focused tests retain their original budgets.
 - A reference-flow lane was dispatched before its Redis dependency lane completed,
   stopped for unavailable dependencies, then returned an unverified harness that
   missed multiple runtime criteria. The cycle discarded its own speculative changes

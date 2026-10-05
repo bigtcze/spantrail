@@ -59,8 +59,15 @@ No Redis capability or full-reference-flow claim is established by this cycle.
 
 ## Publication
 
-PR #9 is merged. The focused CI repair is ready for commit and publication on
-`fix/capture-ci-diagnostics`; inspect its new GitHub checks before merging.
+PR #9 is merged. Repair commit `def2e1a` is published on
+`fix/capture-ci-diagnostics` in PR #10:
+https://github.com/bigtcze/spantrail/pull/10.
+Push CI `37266961039` passed all gates. PR CI `37266984228` exposed a one-second
+browser-close budget confounding the disposal diagnostic assertion, correctly
+reporting an additional `browser` cleanup failure. Only the two disposal probes
+now use a five-second stage budget and a 15-second parent bound; exact diagnostics
+and cleanup/privacy assertions remain intact. Both probes passed five repetitions
+and the complete 38-test capture suite. Inspect updated checks before merging.
 The autonomous v1.0 mission is not complete.
 
 ## Immediate next action
