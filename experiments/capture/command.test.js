@@ -20,7 +20,7 @@ const within = async (promise, label, ms = 12000) => {
   finally { clearTimeout(timer); }
 };
 
-async function fixture(t, { delayListen = 0, reject = false, initialComplete = false, hangResponse = false, completeBeforeResponseEnd = false, hangFlush = false, rejectShutdown = false, preexistingTraceparent = false } = {}) {
+async function fixture(t, { delayListen = 0, reject = false, initialComplete = false, hangResponse = false, completeBeforeResponseEnd = false, hangFlush = false, rejectShutdown = false, preexistingTraceparent = false, rejectDispose = false } = {}) {
   const dir = await mkdtemp(resolve(tmpdir(), 'spantrail-command-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const entry = resolve(dir, 'app.cjs');
@@ -28,10 +28,11 @@ async function fixture(t, { delayListen = 0, reject = false, initialComplete = f
   const startedFile = resolve(dir, 'started');
   const exitedFile = resolve(dir, 'exited');
   const shutdownAttemptFile = resolve(dir, 'shutdown-attempt');
-  const html = `<!doctype html><button id="checkout">Checkout</button><output id="status">${initialComplete ? 'checkout complete' : 'idle'}</output><script>${hangFlush ? "Object.defineProperty(window,'__spantrailCaptureFlush',{value:()=>new Promise(()=>{})});" : ''}document.querySelector('#checkout').addEventListener('click',async()=>{try{${completeBeforeResponseEnd ? `fetch('/checkout'${preexistingTraceparent ? ",{headers:{traceparent:'00-11111111111111111111111111111111-2222222222222222-01'}}" : ''}).catch(()=>{});document.querySelector('#status').textContent='checkout complete';` : "const r=await fetch('/checkout');const data=await r.json();document.querySelector('#status').textContent=data.ok?'checkout complete':'checkout failed';"}}catch{document.querySelector('#status').textContent='checkout failed'}});fetch('/unrelated').catch(()=>{});</script>`;
-  const source = `const http=require('node:http');const fs=require('node:fs');const {createRequire}=require('node:module');const {trace}=createRequire(${JSON.stringify(resolve(root, 'package.json'))})(${JSON.stringify(apiPath)});const tracer=trace.getTracer('command-fixture');${rejectShutdown ? `const sdk=require(${JSON.stringify(projectRequire.resolve('@opentelemetry/sdk-node'))});sdk.NodeSDK.prototype.shutdown=()=>{fs.writeFileSync(${JSON.stringify(shutdownAttemptFile)},'attempted');return Promise.reject(new Error('PRIVATE_SHUTDOWN_MARKER'))};` : ''}const server=http.createServer(async(req,res)=>{if(req.url==='/'){res.writeHead(200,{'content-type':'text/html'});res.end(${JSON.stringify(html)});return}if(req.url==='/unrelated'){res.end('ok');return}if(req.url==='/checkout'){fs.writeFileSync(${JSON.stringify(resolve(dir, 'request'))},'requested');${hangResponse ? "res.write('pending');return;" : reject ? "res.writeHead(500);res.end('failed');return;" : `await tracer.startActiveSpan('checkout-internal',async span=>{await new Promise(r=>setTimeout(r,8));span.end()});res.writeHead(200,{'content-type':'application/json'});${completeBeforeResponseEnd ? "res.write('{\\\"ok\\\":true}');" : 'res.end(JSON.stringify({ok:true}));'}`}return}res.writeHead(404);res.end()});fs.writeFileSync(${JSON.stringify(startedFile)},String(process.pid));setTimeout(()=>{server.listen(Number(process.env.PORT),'127.0.0.1',()=>fs.writeFileSync(${JSON.stringify(portFile)},String(server.address().port)));},${delayListen});process.on('SIGTERM',()=>server.close(()=>{fs.writeFileSync(${JSON.stringify(exitedFile)},'closed');process.exit(0)}));process.on('SIGINT',()=>server.close(()=>{fs.writeFileSync(${JSON.stringify(exitedFile)},'closed');process.exit(0)}));`;
+  const receivedTraceparentFile = resolve(dir, 'received-traceparent');
+  const html = `<!doctype html><button id="checkout">Checkout</button><output id="status">${initialComplete ? 'checkout complete' : 'idle'}</output><script>${hangFlush ? "Object.defineProperty(window,'__spantrailCaptureFlush',{value:()=>new Promise(()=>{})});" : ''}${rejectDispose ? `Object.defineProperty(window,'__spantrailCaptureDispose',{configurable:true,value:async()=>{await fetch('/dispose-marker');throw new Error('PRIVATE_DISPOSE_MARKER')}});` : ''}document.querySelector('#checkout').addEventListener('click',async()=>{try{${completeBeforeResponseEnd ? `fetch('/checkout'${preexistingTraceparent ? ",{headers:{traceparent:'00-11111111111111111111111111111111-2222222222222222-01'}}" : ''}).catch(()=>{});document.querySelector('#status').textContent='checkout complete';` : `const r=await fetch('/checkout'${preexistingTraceparent ? ",{headers:{traceparent:'00-11111111111111111111111111111111-2222222222222222-01'}}" : ''});const data=await r.json();document.querySelector('#status').textContent=data.ok?'checkout complete':'checkout failed';`}}catch{document.querySelector('#status').textContent='checkout failed'}});fetch('/unrelated').catch(()=>{});</script>`;
+  const source = `const http=require('node:http');const fs=require('node:fs');const {createRequire}=require('node:module');const {trace}=createRequire(${JSON.stringify(resolve(root, 'package.json'))})(${JSON.stringify(apiPath)});const tracer=trace.getTracer('command-fixture');${rejectShutdown ? `const sdk=require(${JSON.stringify(projectRequire.resolve('@opentelemetry/sdk-node'))});sdk.NodeSDK.prototype.shutdown=()=>{fs.writeFileSync(${JSON.stringify(shutdownAttemptFile)},'attempted');return Promise.reject(new Error('PRIVATE_SHUTDOWN_MARKER'))};` : ''}const server=http.createServer(async(req,res)=>{if(req.url==='/'){res.writeHead(200,{'content-type':'text/html'});res.end(${JSON.stringify(html)});return}if(req.url==='/unrelated'){res.end('ok');return}if(req.url==='/dispose-marker'){fs.writeFileSync(${JSON.stringify(resolve(dir, 'dispose-marker'))},'requested');res.end('ok');return}if(req.url==='/checkout'){fs.writeFileSync(${JSON.stringify(resolve(dir, 'request'))},'requested');fs.writeFileSync(${JSON.stringify(receivedTraceparentFile)},req.headers.traceparent??'');${hangResponse ? "res.write('pending');return;" : reject ? "res.writeHead(500);res.end('failed');return;" : `await tracer.startActiveSpan('checkout-internal',async span=>{await new Promise(r=>setTimeout(r,8));span.end()});res.writeHead(200,{'content-type':'application/json'});${completeBeforeResponseEnd ? "res.write('{\\\"ok\\\":true}');" : 'res.end(JSON.stringify({ok:true}));'}`}return}res.writeHead(404);res.end()});fs.writeFileSync(${JSON.stringify(startedFile)},String(process.pid));setTimeout(()=>{server.listen(Number(process.env.PORT),'127.0.0.1',()=>fs.writeFileSync(${JSON.stringify(portFile)},String(server.address().port)));},${delayListen});process.on('SIGTERM',()=>server.close(()=>{fs.writeFileSync(${JSON.stringify(exitedFile)},'closed');process.exit(0)}));process.on('SIGINT',()=>server.close(()=>{fs.writeFileSync(${JSON.stringify(exitedFile)},'closed');process.exit(0)}));`;
   await writeFile(entry, source);
-  return { dir, entry, portFile, startedFile, exitedFile, shutdownAttemptFile, requestFile: resolve(dir, 'request') };
+  return { dir, entry, portFile, startedFile, exitedFile, shutdownAttemptFile, requestFile: resolve(dir, 'request'), receivedTraceparentFile, disposeMarkerFile: resolve(dir, 'dispose-marker') };
 }
 
 async function stopCli(proc) {
@@ -53,7 +54,7 @@ function launch(args, env = {}) {
   child.stdout.setEncoding('utf8').on('data', chunk => { stdout += chunk; });
   child.stderr.setEncoding('utf8').on('data', chunk => { stderr += chunk; });
   const close = new Promise(resolve => child.once('close', (code, signal) => resolve({ code, signal })));
-  return { child, close, diagnostics: () => `stdout:\n${stdout}\nstderr:\n${stderr}`, stdout: () => stdout };
+  return { child, close, diagnostics: () => `stdout:\n${stdout}\nstderr:\n${stderr}`, stdout: () => stdout, stderr: () => stderr };
 }
 
 async function waitForFile(path, proc, label, ms = 10000) {
@@ -285,18 +286,45 @@ test('SDK shutdown rejection fails capture without exposing its error or publish
   }
 });
 
-test('preexisting traceparent rejects checkout capture and closes app', async t => {
-  const app = await fixture(t, { completeBeforeResponseEnd: true, preexistingTraceparent: true });
+test('preexisting traceparent and rejected browser disposal report sanitized combined failure', async t => {
+  const app = await fixture(t, { preexistingTraceparent: true, rejectDispose: true });
   const port = await reservePort();
   const output = resolve(app.dir, 'absent.json');
-  const proc = launch(['--entry', app.entry, '--url', `http://127.0.0.1:${port}/`, '--endpoint', `http://127.0.0.1:${port}/checkout`, '--click', '#checkout', '--complete', '#status', '--text', 'checkout complete', '--output', output, '--timeout', '1000', '--no-viewer'], { PORT: String(port) });
+  const proc = launch(['--entry', app.entry, '--url', `http://127.0.0.1:${port}/`, '--endpoint', `http://127.0.0.1:${port}/checkout`, '--click', '#checkout', '--complete', '#status', '--text', 'checkout complete', '--output', output, '--timeout', '5000', '--no-viewer'], { PORT: String(port) });
   let pid;
   try {
     pid = Number(await waitForFile(app.startedFile, proc, 'owned app startup marker'));
     await waitForFile(app.requestFile, proc, 'request preserving preexisting traceparent');
-    const result = await within(proc.close, 'preexisting traceparent exit', 8000);
-    assert.notEqual(result.code, 0, proc.diagnostics());
-    assert.match(proc.diagnostics(), /capture: browser action failed/);
+    const result = await within(proc.close, 'preexisting traceparent exit', 15000);
+    assert.equal(await readFile(app.receivedTraceparentFile, 'utf8'), '00-11111111111111111111111111111111-2222222222222222-01');
+    assert.equal(result.code, 1, proc.diagnostics());
+    assert.equal(proc.stderr().trim(), 'capture: browser action failed; cleanup failed: capture hooks');
+    assert.doesNotMatch(proc.diagnostics(), /PRIVATE_DISPOSE_MARKER|AggregateError|traceparent/);
+    await waitForFile(app.disposeMarkerFile, proc, 'real browser disposal marker request');
+    await assert.rejects(access(output), { code: 'ENOENT' });
+    await assertProcessGone(pid);
+    await assertClosed(port);
+  } finally {
+    if (proc.child.exitCode === null) proc.child.kill('SIGKILL');
+    await stopCli(proc);
+    if (pid) await assertProcessGone(pid);
+  }
+});
+
+test('successful capture reports rejected browser cleanup without publishing', async t => {
+  const app = await fixture(t, { rejectDispose: true });
+  const port = await reservePort();
+  const output = resolve(app.dir, 'absent.json');
+  const proc = launch(['--entry', app.entry, '--url', `http://127.0.0.1:${port}/`, '--endpoint', `http://127.0.0.1:${port}/checkout`, '--click', '#checkout', '--complete', '#status', '--text', 'checkout complete', '--output', output, '--timeout', '5000', '--no-viewer'], { PORT: String(port) });
+  let pid;
+  try {
+    pid = Number(await waitForFile(app.startedFile, proc, 'owned app startup marker'));
+    await waitForFile(app.requestFile, proc, 'successful checkout request');
+    const result = await within(proc.close, 'browser cleanup rejection exit', 15000);
+    assert.equal(result.code, 1, proc.diagnostics());
+    assert.equal(proc.stderr().trim(), 'capture: resource shutdown failed');
+    assert.doesNotMatch(proc.diagnostics(), /PRIVATE_DISPOSE_MARKER|AggregateError/);
+    await waitForFile(app.disposeMarkerFile, proc, 'real browser disposal marker request');
     await assert.rejects(access(output), { code: 'ENOENT' });
     await assertProcessGone(pid);
     await assertClosed(port);

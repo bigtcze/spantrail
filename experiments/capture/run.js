@@ -125,14 +125,14 @@ async function main(args) {
     if (Buffer.byteLength(body) > 1024 * 1024) throw new Error('artifact validation failed');
     stage = 'resource shutdown';
     check();
-    let disposeFailed = false;
-    try { await bounded(hooks.dispose(), options.timeout); } catch { disposeFailed = true; }
+    const disposeFailures = [];
+    try { await bounded(hooks.dispose(), options.timeout); } catch { disposeFailures.push('capture hooks'); }
     hooks = null;
-    try { await bounded(context.close(), options.timeout); } catch { disposeFailed = true; }
+    try { await bounded(context.close(), options.timeout); } catch { disposeFailures.push('browser context'); }
     context = null;
-    try { await bounded(browser.close(), options.timeout); } catch { disposeFailed = true; }
+    try { await bounded(browser.close(), options.timeout); } catch { disposeFailures.push('browser'); }
     browser = null;
-    if (disposeFailed) throw new Error('resource shutdown failed');
+    if (disposeFailures.length) throw new Error(`resource shutdown failed: ${disposeFailures.join(', ')}`);
     check();
     let shutdownAck = null;
     const onMessage = message => { if (message?.protocol === 'spantrail-capture-v1' && typeof message.id === 'string') shutdownAck = message; };
@@ -153,19 +153,21 @@ async function main(args) {
     } else process.stdout.write(`Artifact: ${options.output}\n`);
   } catch (error) { failed = interrupted ? new Error('interrupted') : error; }
   const cleanupErrors = [];
-  try { await bounded(hooks?.dispose(), options.timeout); } catch { if (hooks) cleanupErrors.push(true); }
+  try { await bounded(hooks?.dispose(), options.timeout); } catch { if (hooks) cleanupErrors.push('capture hooks'); }
   hooks = null;
-  try { await bounded(context?.close(), options.timeout); } catch { if (context) cleanupErrors.push(true); }
+  try { await bounded(context?.close(), options.timeout); } catch { if (context) cleanupErrors.push('browser context'); }
   context = null;
-  try { await bounded(browser?.close(), options.timeout); } catch { if (browser) cleanupErrors.push(true); }
+  try { await bounded(browser?.close(), options.timeout); } catch { if (browser) cleanupErrors.push('browser'); }
   browser = null;
-  try { stopping = true; await capture?.stop(); } catch { cleanupErrors.push(true); } finally { capture = null; stopping = false; }
-  try { await viewer?.close(); } catch { cleanupErrors.push(true); }
+  try { stopping = true; await capture?.stop(); } catch { cleanupErrors.push('capture process'); } finally { capture = null; stopping = false; }
+  try { await viewer?.close(); } catch { cleanupErrors.push('viewer'); }
   for (const [signal, handler] of handlers) process.off(signal, handler);
   if ((failed || cleanupErrors.length || interrupted) && artifactCreated && !publicationComplete) await fs.rm(options.output, { force: true }).catch(() => {});
   if (failed || cleanupErrors.length || interrupted) {
     if (interrupted) { process.exitCode = interrupted; return; }
-    throw new Error(cleanupErrors.length ? 'cleanup failed' : `${stage} failed`);
+    const primary = failed ? `${stage} failed` : null;
+    const cleanup = cleanupErrors.length ? `cleanup failed: ${cleanupErrors.join(', ')}` : null;
+    throw new Error([primary, cleanup].filter(Boolean).join('; '));
   }
 }
 
