@@ -1,189 +1,31 @@
 # SpanTrail v1.0 Definition of Done
 
-SpanTrail has a finite autonomous development objective.
+Finite objective: trustworthy public v1.0.0, supported by reproducible evidence. Do not turn completion into endless improvement.
 
-The project is complete when a trustworthy public v1.0.0 release exists and
-the conditions below are supported by reproducible evidence.
+## Product promise and scope
 
-The objective is not endless improvement.
+A developer runs SpanTrail with a supported Node.js/TypeScript web app, performs a meaningful browser action and inspects its real runtime trail: browser → HTTP → app code → database/cache/external services → response → resulting app behavior. Evidence, not LLM inference. Conceptual command: `npx spantrail -- npm run dev`; useful interactive trail, minimal configuration.
 
-## Product promise
+Required strong support: browser/user correlation, HTTP server requests, app execution, source attribution where technically possible, PostgreSQL, Redis, outbound HTTP, errors, latency and interactive visualization. Validate one representative modern full-stack framework and one conventional Node.js backend framework. Other ecosystems are not required.
 
-A developer can run SpanTrail with a supported Node.js/TypeScript web
-application, perform a meaningful browser action, and inspect the real runtime
-trail caused by that action:
+## Gates
 
-browser interaction
--> HTTP request
--> application code
--> database/cache/external services
--> response
--> resulting application behaviour.
-
-The trail is derived from runtime evidence rather than inferred by an LLM.
-
-The desired user experience is conceptually:
-
-    npx spantrail -- npm run dev
-
-followed by a useful interactive trail with minimal configuration.
-
-## v1.0 scope
-
-The required ecosystem is Node.js / TypeScript.
-
-The v1.0 product must demonstrate strong support for:
-
-- browser/user interaction correlation,
-- HTTP server requests,
-- application execution,
-- source attribution where technically possible,
-- PostgreSQL,
-- Redis,
-- outbound HTTP calls,
-- errors and latency,
-- interactive visualization.
-
-At least one representative modern full-stack framework and one conventional
-Node.js backend framework must be validated.
-
-Additional languages and ecosystems are explicitly not required for v1.0.
-
-## User experience gate
-
-A competent developer unfamiliar with SpanTrail must be able to obtain the
-first useful trail from documented installation instructions in no more than
-five minutes on a supported clean environment.
-
-The normal happy path must not require prior OpenTelemetry expertise.
-
-## Functional gate
-
-A deterministic reference application must contain a realistic flow involving:
-
-browser interaction
--> backend request
--> application functions
--> PostgreSQL
--> Redis
--> outbound HTTP call
--> resulting response.
-
-SpanTrail must correctly visualize that flow.
-
-Errors introduced at known points in the fixture must be visible at the
-correct place in the execution trail.
-
-## Evidence gate
-
-Critical product claims must be covered by automated or reproducible
-verification.
-
-Maintain fixture applications and golden scenarios.
-
-CI must exercise meaningful unit, integration and end-to-end behaviour.
-
-Do not mark unsupported or unverified capabilities as supported.
-
-## Reliability gate
-
-All supported golden scenarios must pass consistently.
-
-There must be no known critical or high-severity defect that makes the primary
-supported workflow unusable or materially misleading.
-
-## Performance gate
-
-Create a reproducible benchmark measuring SpanTrail instrumentation overhead.
-
-Set an evidence-based acceptable limit before v1.0 and document the result.
-
-Do not hide unacceptable overhead merely to reach release status.
-
-## Privacy gate
-
-The core product is local-first.
-
-Application source, runtime traces and captured data must not be sent to a
-third-party service unless the user explicitly configures that behaviour.
-
-The core tracing and visualization path must work without an LLM or cloud AI
-service.
-
-## Distribution gate
-
-Before completion SpanTrail must have:
-
-- a public installable package,
-- a tagged v1.0.0 release,
-- automated release/build validation,
-- a clear license,
-- useful README,
-- less-than-five-minute quickstart,
-- troubleshooting documentation,
-- architecture documentation,
-- privacy/security documentation,
-- contributing guidance.
-
-## Demonstration gate
-
-The repository must contain a high-quality visual demonstration showing the
-core value proposition quickly.
-
-A developer seeing the demonstration should be able to understand the basic
-purpose of SpanTrail without reading a long explanation.
-
-## Product quality review
-
-Before declaring completion, conduct a final independent product, engineering,
-security and UX review using appropriate specialist agents.
-
-Critical findings must be resolved.
-
-Do not lower acceptance criteria simply to declare the project complete.
+- **User experience:** competent developer unfamiliar with SpanTrail gets a first useful trail from documented installation on a supported clean environment in ≤5 minutes; happy path requires no prior OpenTelemetry expertise.
+- **Functional:** deterministic realistic reference app covers browser → backend → app functions → PostgreSQL → Redis → outbound HTTP → response; visualization is correct. Known fixture errors appear at the correct trail location.
+- **Evidence:** critical claims automated/reproducibly verified; maintain fixtures/golden scenarios; CI exercises meaningful unit, integration and E2E. Never mark unsupported or unverified capabilities as supported.
+- **Reliability:** all supported golden scenarios pass consistently; no known critical/high defect makes primary workflow unusable or materially misleading.
+- **Performance:** reproducible instrumentation-overhead benchmark; evidence-based acceptable limit set before v1.0 and result documented. Do not hide unacceptable overhead.
+- **Privacy:** local-first. Application source, runtime traces and captured data are not sent to third parties unless the user explicitly configures that behaviour. Core tracing and visualization work without LLM or cloud AI.
+- **Distribution:** public installable package, tagged v1.0.0, automated release/build validation, clear license, useful README, <5-minute quickstart, troubleshooting, architecture, privacy/security and contributing docs.
+- **Demonstration:** repository contains a high-quality visual demo that quickly conveys core value without long explanation.
+- **Final quality:** final independent product, engineering, security and UX reviews using appropriate specialist agents; resolve critical findings. Never lower criteria.
 
 ## Product hypothesis escape hatch
 
-If evidence collected during development demonstrates that an implementation
-assumption is wrong, the autonomous team may change architecture,
-implementation strategy or exact framework selection.
+Evidence may change architecture, implementation strategy or framework. If the approach cannot provide useful runtime understanding, conduct a documented product review; remain focused on making real web-app runtime behavior understandable. Never silently change product category.
 
-If evidence demonstrates that the current product approach cannot provide
-useful runtime understanding, perform a documented product review.
+## Exact completion procedure
 
-The project must remain focused on making real web application runtime
-behaviour easy for developers to understand.
+Only after every gate is satisfied, in order: (1) final independent reviews; (2) complete release test matrix; (3) publish/tag v1.0.0; (4) verify public-release installation on clean environment; (5) update docs; (6) record evidence for every gate; (7) create `.autonomous/PROJECT_COMPLETE` containing release version, release commit, completion date, evidence summary, known non-critical limits and deferred post-v1.0 opportunities.
 
-Do not silently transform SpanTrail into an unrelated product.
-
-## Completion procedure
-
-Only when all v1.0 gates are satisfied:
-
-1. perform the final independent reviews,
-2. execute the complete release test matrix,
-3. publish/tag v1.0.0,
-4. verify installation from the public release on a clean environment,
-5. update documentation,
-6. record evidence for each Definition of Done gate,
-7. create:
-
-   .autonomous/PROJECT_COMPLETE
-
-The completion file must contain:
-
-- release version,
-- release commit,
-- completion date,
-- evidence summary,
-- known non-critical limitations,
-- deferred post-v1.0 opportunities.
-
-PROJECT_COMPLETE must never be created merely because development became
-difficult or because no obvious task was found.
-
-After PROJECT_COMPLETE exists, continuous autonomous feature development must
-stop.
-
-Post-v1.0 maintenance is a separate operating mode and is not part of this
-autonomous development mission.
+Never create the marker because work became difficult or no task is obvious. After it exists, stop feature development; maintenance is separate.
