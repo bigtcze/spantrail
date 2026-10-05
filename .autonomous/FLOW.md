@@ -20,6 +20,12 @@ This workflow is mutable when evidence shows a better process.
 Use research when facts may have changed or when choosing between competing
 technical approaches.
 
+Model dependency installation as an explicit prerequisite: a lane that must inspect
+or execute a newly installed API starts after the dependency lane is reconciled.
+Do not dispatch a broad integration implementation against unavailable dependencies.
+When post-merge CI becomes available during a cycle, inspect it before publishing
+unrelated work; a newly failing existing gate takes priority.
+
 For substantial work:
 
 1. define acceptance criteria,

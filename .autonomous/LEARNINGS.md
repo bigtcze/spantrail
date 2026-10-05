@@ -5,6 +5,25 @@ Record process improvements, disproved assumptions and durable lessons here.
 Do not turn this into a raw activity log. Only record information that should
 change future behaviour.
 
+## 2026-10-05 — Preserve failure stages and gate dependency handoffs
+
+- The PostgreSQL PR passed its head checks, but post-merge main CI failed when a
+  preexisting-trace-header test also kept its HTTP response unfinished. Cleanup
+  replaced the browser-action diagnostic, hiding the original boundary. The finite
+  header fixture now sends the header on its awaited-fetch path; the separate
+  unfinished-response case remains. Persistent Chromium tests force actual disposal
+  rejection, await a server-observed disposal marker, assert the exact received
+  header and combined sanitized diagnostic, and require no artifact, dead app PID,
+  and closed port. Preserve both primary and cleanup failure evidence without
+  exposing raw exception text. A green head run is not proof of subsequent main CI.
+- A reference-flow lane was dispatched before its Redis dependency lane completed,
+  stopped for unavailable dependencies, then returned an unverified harness that
+  missed multiple runtime criteria. The cycle discarded its own speculative changes
+  and prioritized the observed CI failure. FLOW now explicitly gates API-dependent
+  implementation on reconciled dependency installation and checks post-merge CI
+  before unrelated publication. Future reference work should begin with the small
+  real Redis SET/GET tracing contract before expanding the combined orchestrator.
+
 ## 2026-10-05 — Failure probes must fail for the real guard
 
 - Recovery of unfinished PostgreSQL work found an active-request probe that crashed
