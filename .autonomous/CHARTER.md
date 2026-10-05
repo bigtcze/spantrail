@@ -1,95 +1,17 @@
-# SpanTrail Charter
+# SpanTrail charter
 
-## Goal
+## Mission
 
-Build an excellent open-source developer tool with a realistic chance of
-gaining substantial organic adoption on GitHub.
+Open-source developer tool earning organic adoption through product quality, immediate usefulness, low setup friction, trustworthy engineering, visual demonstration and community discovery—not spam, artificial stars, deceptive claims or low-quality releases.
 
-Popularity is not an excuse for spam, artificial stars, deceptive claims or
-low-quality releases.
+**Promise:** “Run your app. Click something. See exactly what happened.” Make real observed runtime behavior understandable, not guessed by an LLM.
 
-The mechanism for adoption should be:
+## Product shape
 
-excellent product
-+ immediate usefulness
-+ strong visual demonstration
-+ low setup friction
-+ trustworthy engineering
-+ organic community discovery.
+Trace an interaction through browser → HTTP → handler → app code → services → DB/cache/queue → external APIs → response → resulting UI; present a clear interactive visual trail. Useful result under 60 seconds from installation is an aspiration, with minimal/zero instrumentation configuration.
 
-## Core thesis
+Start with modern web apps and make one stack excellent before broad claims. Initial likely ecosystem: TypeScript/Node.js, Playwright, OpenTelemetry, HTTP frameworks, PostgreSQL and Redis; this is focus, not a support claim. Python only after the core experience is excellent.
 
-Developers increasingly use coding agents to generate and modify software,
-while understanding the real runtime behaviour of that software remains hard.
+## Enduring qualities
 
-SpanTrail should make runtime behaviour understandable.
-
-The core promise is:
-
-"Run your app. Click something. See exactly what happened."
-
-## Initial product direction
-
-A local-first developer tool that correlates a real browser/user interaction
-with the actual execution path through an application:
-
-browser interaction
--> HTTP request
--> route / handler
--> application code
--> services
--> database / cache / queue
--> external APIs
--> response
--> resulting UI state
-
-and presents this as a clear interactive visual trail.
-
-The trail must be based on observed runtime evidence, not an LLM-generated
-guess.
-
-## Initial target
-
-Start with modern web applications.
-
-Prioritize an extremely strong experience for one stack before claiming broad
-support.
-
-A likely initial stack is:
-
-- TypeScript / Node.js
-- Playwright
-- OpenTelemetry
-- common HTTP frameworks
-- PostgreSQL
-- Redis
-
-Python support may follow after the core experience is excellent.
-
-## Success characteristics
-
-Optimize for:
-
-- useful result in under 60 seconds from installation,
-- minimal or zero instrumentation configuration,
-- excellent visual output,
-- deterministic tracing,
-- easy local installation,
-- privacy,
-- reproducible demo applications,
-- excellent documentation,
-- a compelling animated demo / screenshot,
-- stable releases.
-
-## Product evolution
-
-The exact implementation and feature roadmap are not fixed.
-
-The autonomous team may change architecture, priorities, UI and supported
-stacks when real evidence supports the decision.
-
-Large product-direction changes must be documented in PRODUCT.md with the
-evidence and reasoning.
-
-Do not drift into an unrelated product category merely because implementation
-is easier.
+Deterministic tracing, excellent visual output, easy local installation, privacy, reproducible demos, excellent docs, compelling animated demo/screenshot and stable releases. No unrelated product drift. Architecture, UI and stacks may change on evidence; record direction changes and reasoning in PRODUCT.md.
