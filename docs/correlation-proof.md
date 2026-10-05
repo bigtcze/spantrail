@@ -36,10 +36,11 @@ and retain a local artifact for inspection.
 
 This establishes causal linkage for a deliberately controlled, serialized
 interaction. It does not establish attribution for overlapping actions,
-background requests, redirects, cross-origin traffic, or databases. Application
-service spans are explicit instrumentation, not inferred function-level
-execution. The integrated test suite also exercises a separate compiled
-TypeScript source-attribution fixture; that narrow evidence and its limits are
+background requests, redirects, or cross-origin traffic. Database tracing is
+covered only by the separate narrow PostgreSQL proof below; this legacy proof
+does not cover it. Application service spans are explicit instrumentation, not
+inferred function-level execution. The integrated test suite also exercises a
+separate compiled TypeScript source-attribution fixture; that narrow evidence and its limits are
 documented in [Source attribution proof](source-attribution-proof.md).
 
 ## Reproduce locally
@@ -131,6 +132,61 @@ Cooperative shutdown deadlines do not guarantee flush or drain. Mapped source
 attribution remains limited to the explicitly instrumented controlled TypeScript
 fixture and its approved source map; other spans report unknown.
 
+## PostgreSQL 18.6 CommonJS integration proof
+
+A separate real-database Chromium proof exercises PostgreSQL 18.6-bookworm, `pg`
+8.23.1, and `@opentelemetry/instrumentation-pg` 0.74.0 through the reusable local
+CommonJS capture preload. The fixture uses Express 5.2.1 and Node.js 24.21.0; this
+is one narrowly scoped integration, not general PostgreSQL, Redis, or framework
+support. The PostgreSQL CLIENT span receives the fixed display name `PostgreSQL`
+only after the sanitizer's installed instrumentation-scope, span-kind, and database
+system checks. This label is not an authenticity boundary against a malicious app.
+
+Run the dedicated integration gate after installing dependencies and Chromium:
+
+```sh
+npm run proof:postgres
+node --test experiments/postgres/harness.test.js
+```
+
+The harness tests use their own disposable Docker containers, including when the
+integration proof uses a supplied database. They cover delayed startup, a real
+aborted exporter attempt, rejected SDK shutdown, shutdown exporter attempts,
+cleanup failure, repeated active-request interruption, and URL rejection before
+startup. Docker is required for this separate harness gate.
+
+Locally, the command requires Docker and starts a disposable `postgres:18.6-bookworm`
+container published only on a dynamically allocated loopback port; it removes that
+container on completion. Alternatively, set `SPANTRAIL_POSTGRES_URL` to an existing
+dedicated loopback test instance. The URL must contain no query parameters. The supplied
+instance is not stopped or removed. The fixture performs only `SELECT` queries and does not mutate tables. CI runs this
+as a separate explicit PostgreSQL integration step with a PostgreSQL service;
+it is not part of the default `npm test` command. The repository pins `pg` 8.23.1
+(MIT) and `@opentelemetry/instrumentation-pg` 0.74.0 (Apache-2.0).
+
+Three serialized Chromium actions execute a parameterized successful query with
+`pg_sleep`, a real invalid-parameter query failure, then a successful recovery.
+Each action has a fresh trace and the tested path asserts exactly one HTTP SERVER
+span parented to the browser CLIENT action, one explicit app INTERNAL span parented
+to SERVER, and one PostgreSQL CLIENT span parented to INTERNAL. The PostgreSQL
+source attribution is explicitly unknown. Successful `pg_sleep` duration is
+asserted from the observed span; failure status and subsequent recovery are also
+checked. The unchanged viewer is inspected in Chromium for each action, including
+the PostgreSQL name, unknown source, observed duration/status, and HTTP request
+parent. The test verifies that the served sanitized artifact omits its sentinel
+result and connection credentials, and that hostile OTEL exporter settings cause
+no outbound HTTP(S) exporter attempts through shutdown.
+
+Sanitized records/artifacts exclude SQL text, parameters, database credentials,
+query results, and errors. This is output sanitization, not collection prevention:
+raw OpenTelemetry span attributes, including `db.query.text`, may exist in process
+memory before serialization. This is not a sandbox or heap bound, and does not
+establish a fully drained trace or general PostgreSQL/`pg` coverage. Shutdown is
+cooperative. The runner requires a positive SDK shutdown acknowledgement and observed
+child exit before reporting success; cleanup errors reject success. This is not evidence
+of a fully drained trace. It makes no performance, onboarding, or full-stack golden
+flow claim.
+
 ## Local CommonJS session proof
 
 `experiments/capture/session.js` exports the programmatic `startCapture` entry
@@ -146,7 +202,10 @@ const exit = await capture.stop(); // resolves when the child exit is observed
 ```
 
 This is a local CommonJS session helper, not a published package, generic CLI,
-npm wrapper, or arbitrary browser injector. It forks the app with the local
+npm wrapper, or arbitrary browser injector. Its preload auto-instruments Node HTTP
+and PostgreSQL `pg` when required before app load; the separate PostgreSQL integration
+proof covers only its narrow tested fixture, not this helper as a general database
+support claim. It forks the app with the local
 CommonJS preload. Application readiness is caller-managed: the helper does not
 infer that the server is listening. Child stdout/stderr remain raw application
 output and are not redacted by the capture schema. Applications may use the
@@ -156,8 +215,12 @@ trace-context code. The viewer's temporary artifact is used for the
 actual browser gate; no capture artifact is retained by default.
 
 Completed records are sanitized: generic span names, null paths, and unknown
-source; arbitrary application names, attributes, error messages, paths, headers,
-and bodies are not returned. Existing `OTEL_` environment variables are cleared
+source; recognized PostgreSQL CLIENT spans use the fixed `PostgreSQL` label.
+The preload auto-instruments `pg` only when loaded before the app. Arbitrary
+application names, attributes, error messages, paths, headers, and bodies are not
+returned. Raw span attributes (including SQL query text) may still exist in
+memory before sanitization; this is not collection prevention or an authenticity
+boundary against a malicious app. Existing `OTEL_` environment variables are cleared
 in the child. The in-memory exporter uses the installed SDK's callback-style
 export and Promise-returning `forceFlush`/`shutdown` contracts. A working
 loopback tripwire negative control verifies detection of remote-export attempts;
@@ -188,7 +251,7 @@ The artifact contains spans ended at snapshot time, after the endpoint response 
 
 `--timeout` defaults to 10000 and accepts 100–60000 milliseconds per stage, not as an overall command deadline; the underlying capture stop uses its own bounded deadlines. The output parent must already exist and the target must be new: the command will not overwrite an existing path. It requires positive SDK shutdown acknowledgement and stops its capture app and browser before writing a validated artifact with mode 0600, limited to 1 MiB and containing filtered actions/spans; child exit alone does not establish SDK shutdown. App stdout/stderr are raw and not redacted. No source or request bodies are exported. By default it starts the existing loopback read-only viewer on an ephemeral port, prints its URL for manual opening, and waits for Ctrl+C; a normal viewer stop leaves the persisted artifact in place. `--no-viewer` saves the artifact and exits. `--headed` opens the actual automated capture browser; it does not hand control over for an arbitrary user flow.
 
-This is local artifact handling, not a sandbox: the app's own outbound calls and its loaded page assets are not restricted. Fetch-only capture, rejected endpoint redirects, and blocked service workers can change application semantics. XHR, navigation, arbitrary async causality, databases, generic source/function capture, ESM entries, and broad framework support are out of scope. The core flow does not require an LLM. This command does not establish the five-minute unfamiliar-developer gate or public installability.
+This is local artifact handling, not a sandbox: the app's own outbound calls and its loaded page assets are not restricted. Fetch-only capture, rejected endpoint redirects, and blocked service workers can change application semantics. XHR, navigation, arbitrary async causality, generic database capture beyond the separate narrow PostgreSQL proof, generic source/function capture, ESM entries, and broad framework support are out of scope. The core flow does not require an LLM. This command does not establish the five-minute unfamiliar-developer gate or public installability.
 
 ## Programmatic browser-context capture
 
@@ -251,8 +314,9 @@ proof.
 
 This is a serialized, controlled action rather than generic click attribution.
 It does not establish correct attribution for overlapping actions, background
-requests, redirects, or cross-origin traffic; trace databases; or recover
-inferred function-level execution. It does not demonstrate framework or broad
+requests, redirects, or cross-origin traffic, or recover inferred function-level
+execution. A separate narrow PostgreSQL proof is documented above; neither proof
+establishes general database tracing. It does not demonstrate framework or broad
 language coverage. The application span is explicitly added, not automatically
 inferred. Source-location behavior is limited to the controlled fixture and
 described in the linked proof; it is not general source capture.

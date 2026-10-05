@@ -77,9 +77,10 @@ async function startCapture({ entry, cwd, env = {}, execArgv = [] }) {
       const response = await request('snapshot');
       try {
         if (!Array.isArray(response.spans) || response.spans.length > 1000 || Buffer.byteLength(JSON.stringify({ actions: [], spans: response.spans })) > MAX_MESSAGE) throw new Error();
-        const allowedNames = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE', 'CLIENT', 'SERVER', 'INTERNAL']);
+        const allowedNames = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE', 'CLIENT', 'PostgreSQL', 'SERVER', 'INTERNAL']);
         for (const span of response.spans) {
           if (!span || typeof span !== 'object' || Array.isArray(span) || !allowedNames.has(span.name) || span.path !== null || !span.source || typeof span.source !== 'object' || Array.isArray(span.source) || span.source.status !== 'unknown' || Object.keys(span.source).length !== 1) throw new Error();
+          if (span.name === 'PostgreSQL' && span.kind !== 2) throw new Error();
         }
         return parseArtifact({ actions: [], spans: response.spans }).spans;
       } catch { throw new Error('invalid capture snapshot'); }

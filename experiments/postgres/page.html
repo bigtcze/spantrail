@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>SpanTrail PostgreSQL fixture</title></head>
+<body>
+  <button id="action" type="button">Run action</button>
+  <label for="mode">Mode</label>
+  <select id="mode"><option value="success">success</option><option value="failure">failure</option><option value="recovery">recovery</option></select>
+  <output id="result">Ready</output>
+  <script>
+    document.querySelector('#action').addEventListener('click', async () => {
+      const response = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: document.querySelector('#mode').value }) });
+      const result = await response.json();
+      document.querySelector('#result').textContent = result.message;
+    });
+  </script>
+</body>
+</html>

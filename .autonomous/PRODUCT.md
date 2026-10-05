@@ -39,8 +39,7 @@ failure and later recovery behavior. See
 The TypeScript fixture uses Node.js native call-site/source-map APIs and accepts
 only the controlled fixture's compiler-owned external source map and project
 relative source location. It does not provide generic TypeScript, framework, or
-function auto-capture. Overlapping actions, cross-origin requests, redirects,
-and databases remain unproven.
+function auto-capture. Overlapping actions, cross-origin requests, and redirects remain unproven by this legacy proof. A separate narrow real PostgreSQL proof now covers one CommonJS pg integration; general database support, Redis, and the full-stack golden flow remain unproven.
 
 The local viewer consumes the real proof artifact: action selection, parent-linked
 backend span trees, durations, identifiers, mapped source positions, and explicit
@@ -65,11 +64,18 @@ layer, and function capture.
 
 A separate reusable local CommonJS session removes fixture-specific route/name
 allowlists and app-imported snapshot/shutdown plumbing for temporary app processes.
-It accepts an absolute `.cjs` entry and leaves readiness to the caller. It captures
-HTTP and explicit OpenTelemetry application spans, redacting names/paths and
-reporting unknown source.
+It accepts an absolute `.cjs` entry and leaves readiness to the caller. Its preload
+auto-instruments Node HTTP and PostgreSQL `pg` when those modules are required before
+app load, alongside explicit OpenTelemetry application spans; it redacts names/paths,
+uses a fixed PostgreSQL CLIENT label, and reports unknown source. The PostgreSQL
+label is a sanitized display classification, not an authenticity boundary against
+a malicious app. Sanitized records exclude SQL, parameters, DB credentials/results,
+and errors, but raw span attributes such as `db.query.text` can exist in memory before
+sanitization. This is not collection prevention, a sandbox, a heap bound, or a drain
+guarantee. The narrow PostgreSQL proof validates only its tested fixture; the
+repo-local capture command has no end-to-end PostgreSQL CLI gate.
 
-An experimental repo-local `npm run capture` command composes the CommonJS capture session, a configured Chromium click, artifact validation/publication, and the existing viewer. It is usable as a repo-local command, not a published npm wrapper. It requires an existing `.cjs` app entry, Node 24, installed npm dependencies/Chromium, and explicit app OpenTelemetry instrumentation for application spans. It is narrowly configured, not a generic command wrapper or public package; readiness and exact completion text are required. It captures spans ended at snapshot time, not a fully drained trace or all later-ending work. Its output handling and bounds, per-stage timeout, viewer behavior, and app-network privacy limits are documented in the [capture command proof](../docs/correlation-proof.md#repo-local-capture-command). This does not establish the five-minute onboarding gate.
+An experimental repo-local `npm run capture` command composes the CommonJS capture session, a configured Chromium click, artifact validation/publication, and the existing viewer. It is usable as a repo-local command, not a published npm wrapper. It requires an existing `.cjs` app entry, Node 24, installed npm dependencies/Chromium, and explicit app OpenTelemetry instrumentation for application spans. It is narrowly configured, not a generic command wrapper or public package; readiness and exact completion text are required. It captures spans ended at snapshot time, not a fully drained trace or all later-ending work. Its output handling and bounds, per-stage timeout, viewer behavior, and app-network privacy limits are documented in the [capture command proof](../docs/correlation-proof.md#repo-local-capture-command). The capture command itself has no end-to-end PostgreSQL CLI gate; the separate narrow proof does not establish the five-minute onboarding gate.
 
 A narrow programmatic Chromium browser-context capture now creates the context with
 service workers blocked and installs before pages are created. Trusted top-frame
@@ -91,6 +97,8 @@ A cold machine setup observation is documented in the [local viewer guide](../do
 but it is not a benchmark and does not establish the five-minute
 unfamiliar-developer gate. AppMap and Jaeger are useful reference points; these
 proofs establish no comparative advantage.
+
+A separate `npm run proof:postgres` integration gate exercises PostgreSQL 18.6-bookworm with `pg` 8.23.1 and `@opentelemetry/instrumentation-pg` 0.74.0 in a CommonJS fixture. Real Chromium actions cover success, query failure, and recovery; assertions establish exact SERVER -> explicit INTERNAL -> PostgreSQL CLIENT parentage, unknown source, real `pg_sleep` duration, privacy-filtered evidence, and inspection in the unchanged viewer. The test is separate from default `npm test`, uses SELECT-only queries, and runs against an ephemeral loopback Docker container or an explicitly configured dedicated loopback test instance. The runner requires a positive SDK shutdown acknowledgement and observed child exit before reporting success; cleanup errors reject success. This does not establish a fully drained trace, collection prevention, heap bound, sandboxing, or general PostgreSQL/framework support. A supplied `SPANTRAIL_POSTGRES_URL` must target a dedicated loopback instance and contain no query parameters. See [`docs/correlation-proof.md`](../docs/correlation-proof.md#postgresql-186-commonjs-integration-proof).
 
 This file is intentionally mutable.
 Update it when evidence changes the product strategy.

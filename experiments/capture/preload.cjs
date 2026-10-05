@@ -5,6 +5,9 @@ for (const key of Object.keys(process.env)) if (key.startsWith('OTEL_')) delete 
 const { NodeSDK } = require('@opentelemetry/sdk-node');
 const { SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
+const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg');
+
+const { sanitizeSpan } = require('./runtime-sanitizer.cjs');
 
 const MAX_SPANS = 1000;
 const MAX_MESSAGE = 1024 * 1024;
@@ -13,24 +16,6 @@ let captureError = null;
 let records = [];
 let stopping = false;
 let operation = Promise.resolve();
-
-function sanitizeSpan(span) {
-  try {
-    const method = span.attributes?.['http.request.method'] ?? span.attributes?.['http.method'];
-    const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE'];
-    const kind = span.kind;
-    if (!Number.isInteger(kind) || kind < 0 || kind > 4) throw new Error();
-    const traceId = span.spanContext().traceId;
-    const spanId = span.spanContext().spanId;
-    const parentSpanId = span.parentSpanContext?.spanId ?? null;
-    if (typeof traceId !== 'string' || !/^[0-9a-f]{32}$/.test(traceId) || /^0+$/.test(traceId) || typeof spanId !== 'string' || !/^[0-9a-f]{16}$/.test(spanId) || /^0+$/.test(spanId) || (parentSpanId !== null && (typeof parentSpanId !== 'string' || !/^[0-9a-f]{16}$/.test(parentSpanId) || /^0+$/.test(parentSpanId)))) throw new Error();
-    const durationMs = span.duration[0] * 1000 + span.duration[1] / 1e6;
-    const statusCode = span.status.code;
-    if (!Number.isFinite(durationMs) || durationMs < 0 || !Number.isInteger(statusCode) || statusCode < 0 || statusCode > 2) throw new Error();
-    const name = kind === 1 && typeof method === 'string' && methods.includes(method.toUpperCase()) ? method.toUpperCase() : kind === 2 ? 'CLIENT' : kind === 1 ? 'SERVER' : 'INTERNAL';
-    return { name, kind, path: null, traceId, spanId, parentSpanId, durationMs, source: { status: 'unknown' }, statusCode };
-  } catch { throw new Error('invalid-span'); }
-}
 
 const processor = new SimpleSpanProcessor({
   export(spans, callback) {
@@ -48,7 +33,7 @@ const processor = new SimpleSpanProcessor({
   forceFlush() { return Promise.resolve(); },
   shutdown() { return Promise.resolve(); },
 });
-const sdk = new NodeSDK({ spanProcessors: [processor], metricReaders: [], logRecordProcessors: [], autoDetectResources: false, instrumentations: [new HttpInstrumentation()] });
+const sdk = new NodeSDK({ spanProcessors: [processor], metricReaders: [], logRecordProcessors: [], autoDetectResources: false, instrumentations: [new HttpInstrumentation(), new PgInstrumentation({ enhancedDatabaseReporting: false, ignoreConnectSpans: true, addSqlCommenterCommentToQueries: false })] });
 let readyError = null;
 try { sdk.start(); } catch { readyError = new Error('startup-failed'); }
 const ready = readyError ? Promise.reject(readyError) : Promise.resolve();
