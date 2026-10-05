@@ -11,6 +11,20 @@ jobs:
   browser-proof:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18.6-bookworm
+        env:
+          POSTGRES_USER: spantrail_test
+          POSTGRES_PASSWORD: spantrail_test_only
+          POSTGRES_DB: spantrail_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U spantrail_test -d spantrail_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,4 +33,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm test
+      - name: Full test suite
+        run: npm test
+      - name: PostgreSQL integration
+        env:
+          SPANTRAIL_POSTGRES_URL: postgresql://spantrail_test:spantrail_test_only@127.0.0.1:5432/spantrail_test
+        run: node experiments/postgres/run.js
+      - name: PostgreSQL harness tests
+        env:
+          SPANTRAIL_POSTGRES_URL: postgresql://spantrail_test:spantrail_test_only@127.0.0.1:5432/spantrail_test
+        run: node --test experiments/postgres/harness.test.js

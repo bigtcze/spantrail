@@ -48,7 +48,11 @@ path. A passing helper test does not establish browser behavior when the browser
 uses different code. Run the integrated evidence path after reconciling parallel
 lanes; do not treat a specialist's partial test report as completion. For privacy
 or cleanup claims, include a negative control or failure-path test that would
-detect the corresponding regression.
+detect the corresponding regression. Require evidence that injected probes reached
+the actual boundary; an artificial parent throw is not detection of a child-side
+failure. When that distinction is uncertain, remove the guard in a disposable or
+in-memory mutation and confirm the negative test no longer passes. When adding CI
+gates, compare the prior and proposed workflow steps to retain all existing checks.
 
 Tests that run before artifact generation must create their own temporary
 fixtures, not depend on ignored outputs from earlier runs. Before publishing a

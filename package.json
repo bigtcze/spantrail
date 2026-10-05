@@ -20,6 +20,7 @@
     "test:viewer": "node experiments/viewer/e2e.js",
     "preproof:express": "npm run build",
     "proof:express": "node experiments/express/run.js",
+    "proof:postgres": "node experiments/postgres/run.js",
     "test:viewer:express": "SPANTRAIL_ARTIFACT_PATH=experiments/express/artifacts/express-proof.json node experiments/viewer/e2e.js",
     "viewer": "node experiments/viewer/server.js",
     "capture": "node experiments/capture/run.js",
@@ -33,9 +34,11 @@
   "dependencies": {
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/instrumentation-http": "0.222.0",
+    "@opentelemetry/instrumentation-pg": "0.74.0",
     "@opentelemetry/sdk-node": "0.222.0",
     "@opentelemetry/sdk-trace-base": "2.11.0",
     "express": "5.2.1",
+    "pg": "8.23.1",
     "playwright": "1.63.0"
   }
 }

@@ -5,6 +5,27 @@ Record process improvements, disproved assumptions and durable lessons here.
 Do not turn this into a raw activity log. Only record information that should
 change future behaviour.
 
+## 2026-10-05 — Failure probes must fail for the real guard
+
+- Recovery of unfinished PostgreSQL work found an active-request probe that crashed
+  because Node 24 had no `.cjs` extension handler, then inserted middleware inside
+  a route where it could not execute. A privacy probe passed by injecting a parent
+  throw while its child watched the wrong IPC direction. Repairs exercise the real
+  route and a real aborted HTTP attempt observed after snapshot collection. Final
+  independent in-memory mutations removed privacy verdict checks and made both
+  aborted-request and shutdown-export probes succeed, showing that the ordinary
+  failures depend on those checks. FLOW now requires reached-boundary evidence and
+  a focused guard-removal control when an injected failure could mask the claim.
+- The unfinished CI change replaced `npm test` instead of adding the database gate.
+  Restoring it and comparing old/new workflow steps preserved the existing 106-test
+  and browser evidence path. FLOW now requires this comparison for gate additions.
+- A loopback URL authority does not establish the destination used by `pg`: query
+  parameters can override the host or trigger SSL-file handling. The narrow proof
+  rejects all query delimiters before acquisition; four otherwise-valid loopback
+  rejection cases now exercise this boundary without connecting or printing the
+  supplied credentials. Validate the effective library configuration, or restrict
+  its unsupported override syntax, rather than trusting URL authority alone.
+
 ## 2026-10-05 — Keep capture CLI boundary checks unconfounded
 
 - During the capture-command test cycle, URL parser cases appended replacement
